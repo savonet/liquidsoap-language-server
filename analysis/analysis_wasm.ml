@@ -45,10 +45,19 @@ let type_at line column =
           | Some typ -> Js.some (Js.string typ)
           | None -> Js.null)
 
+let locals_at line column =
+  match !last_result with
+    | None -> Js.array [||]
+    | Some result ->
+        Js.array
+          (Array.of_list
+             (List.map Js.string (Analysis.locals_at result ~line ~column)))
+
 let () =
   Js.export "liquidsoap"
     (object%js
        method loadEnv dump = load_env dump
        method check source = check source
        method typeAt line column = type_at line column
+       method localsAt line column = locals_at line column
     end)
