@@ -14,7 +14,7 @@
     "node": ">=22"
   },
   "scripts": {
-    "build": "tsc && node scripts/copy-assets.mjs",
+    "build": "tsc && node scripts/copy-assets.mjs && node scripts/build-docs.mjs",
     "test": "node --test 'test/**/*.test.mjs'"
   },
   "dependencies": {

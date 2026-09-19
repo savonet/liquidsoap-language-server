@@ -4,9 +4,9 @@ A [Language Server Protocol](https://microsoft.github.io/language-server-protoco
 
 The server runs Liquidsoap's own parser and typechecker, compiled to WebAssembly. It typechecks scripts against the full standard library without a native Liquidsoap binary.
 
-This is early work. The server reports diagnostics (syntax and type errors, warnings) and shows the type of the expression under the cursor on hover, including in scripts that do not parse. Completion comes next.
+This is early work. The server reports diagnostics (syntax and type errors, warnings) and shows documentation or the type of the expression under the cursor on hover, including in scripts that do not parse. Completion comes next.
 
-A script being edited usually does not parse. The patcher uses tree-sitter to find the broken parts and replaces them with `💣()`, a Liquidsoap expression that fits any type, so the typechecker sees the rest of the script as usual. Syntax errors are reported where tree-sitter finds them.
+A script being edited usually does not parse. The patcher tries to replace invalid parts of the script with a universal placeholder, so the rest of the script can still be typechecked.
 
 ## Layout
 
@@ -23,9 +23,10 @@ The analysis module builds against the Liquidsoap libraries. From a Liquidsoap c
 ```sh
 cd /path/to/liquidsoap
 dune build @install src/js/stdlib.types
+_build/default/src/bin/liquidsoap.exe --stdlib ./src/libs/stdlib.liq --list-functions-json > functions.json
 ```
 
-`stdlib.types` is the standard library's typing environment. It must come from the same Liquidsoap commit as the libraries: loading checks the version.
+`stdlib.types` is the standard library's typing environment. It must come from the same Liquidsoap commit as the libraries: loading checks the version. `functions.json` holds the documentation shown on hover.
 
 Then here:
 
@@ -33,7 +34,9 @@ Then here:
 (cd analysis && OCAMLPATH=/path/to/liquidsoap/_build/install/default/lib dune build --profile release ./analysis_wasm.bc.wasm.js)
 pnpm install
 TREE_SITTER_LIQUIDSOAP=/path/to/tree-sitter-liquidsoap pnpm --filter liquidsoap-patcher run build:grammar
-LIQUIDSOAP_STDLIB_TYPES=/path/to/liquidsoap/_build/default/src/js/stdlib.types pnpm run build
+LIQUIDSOAP_STDLIB_TYPES=/path/to/liquidsoap/_build/default/src/js/stdlib.types \
+LIQUIDSOAP_FUNCTIONS_JSON=/path/to/liquidsoap/functions.json \
+  pnpm run build
 pnpm test
 ```
 

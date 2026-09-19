@@ -9,12 +9,14 @@ import {
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { loadAnalysis } from "./analysis";
 import { diagnose } from "./diagnostics";
+import { loadDocs } from "./docs";
 import { hover } from "./hover";
 
 const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);
 const analysis = loadAnalysis(__dirname);
 const patcher = createPatcher();
+const docs = loadDocs(__dirname);
 
 connection.onInitialize(() => ({
   capabilities: {
@@ -34,7 +36,7 @@ documents.onDidChangeContent(async ({ document }) => {
 connection.onHover(async ({ textDocument, position }) => {
   const document = documents.get(textDocument.uri);
   if (!document) return null;
-  return hover(await analysis, await patcher, document, position);
+  return hover(await analysis, await patcher, docs, document, position);
 });
 
 documents.onDidClose(({ document }) =>

@@ -15,6 +15,7 @@ export interface RawDiagnostic {
 export interface Analysis {
   check(source: string): RawDiagnostic[];
   typeAt(line: number, column: number): string | null;
+  localsAt(line: number, column: number): string[];
 }
 
 interface WasmModule extends Analysis {

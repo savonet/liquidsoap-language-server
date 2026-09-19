@@ -3,6 +3,7 @@ import { patchedOffset } from "liquidsoap-patcher";
 import { Hover, MarkupKind, Position } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import type { Analysis } from "./analysis";
+import { type Docs, dottedNameAt, formatDoc } from "./docs";
 import { byteColumn, lineText } from "./positions";
 
 const identifierChar = /[\p{L}\p{N}_'.]/u;
@@ -15,9 +16,14 @@ const onIdentifier = (document: TextDocument, position: Position): boolean => {
   );
 };
 
+const markdown = (value: string): Hover => ({
+  contents: { kind: MarkupKind.Markdown, value },
+});
+
 export const hover = (
   analysis: Analysis,
   patch: Patcher,
+  docs: Docs,
   document: TextDocument,
   position: Position,
 ): Hover | null => {
@@ -32,17 +38,18 @@ export const hover = (
     source,
   );
   const { line, character } = patched.positionAt(offset);
+  const at = { line: line + 1, column: byteColumn(lineText(patched, line), character) };
   // The analysis module answers for the script it checked last.
   analysis.check(source);
-  const type = analysis.typeAt(
-    line + 1,
-    byteColumn(lineText(patched, line), character),
-  );
-  if (!type) return null;
-  return {
-    contents: {
-      kind: MarkupKind.Markdown,
-      value: ["```liquidsoap", type, "```"].join("\n"),
-    },
-  };
+  // The standard library's documentation only applies when the script does not
+  // bind the name itself around the cursor.
+  const name = dottedNameAt(document, position);
+  const doc = name && docs.get(name);
+  if (name && doc) {
+    const root = name.split(".")[0];
+    if (!analysis.localsAt(at.line, at.column).includes(root))
+      return markdown(formatDoc(name, doc));
+  }
+  const type = analysis.typeAt(at.line, at.column);
+  return type ? markdown(["```liquidsoap", type, "```"].join("\n")) : null;
 };
