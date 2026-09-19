@@ -27,12 +27,23 @@ connection.onInitialize(() => ({
   },
 }));
 
-documents.onDidChangeContent(async ({ document }) => {
-  connection.sendDiagnostics({
-    uri: document.uri,
-    version: document.version,
-    diagnostics: diagnose(await analysis, await patcher, document),
-  });
+// Checking on every keystroke would lag behind typing.
+const diagnosticsDelay = 200;
+const pendingDiagnostics = new Map<string, NodeJS.Timeout>();
+
+documents.onDidChangeContent(({ document }) => {
+  clearTimeout(pendingDiagnostics.get(document.uri));
+  pendingDiagnostics.set(
+    document.uri,
+    setTimeout(async () => {
+      pendingDiagnostics.delete(document.uri);
+      connection.sendDiagnostics({
+        uri: document.uri,
+        version: document.version,
+        diagnostics: diagnose(await analysis, await patcher, document),
+      });
+    }, diagnosticsDelay),
+  );
 });
 
 connection.onHover(async ({ textDocument, position }) => {
@@ -47,9 +58,11 @@ connection.onCompletion(async ({ textDocument, position }) => {
   return complete(await analysis, await patcher, document, position);
 });
 
-documents.onDidClose(({ document }) =>
-  connection.sendDiagnostics({ uri: document.uri, diagnostics: [] }),
-);
+documents.onDidClose(({ document }) => {
+  clearTimeout(pendingDiagnostics.get(document.uri));
+  pendingDiagnostics.delete(document.uri);
+  connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
+});
 
 Promise.all([analysis, patcher]).catch((error) => {
   connection.console.error(`Could not start: ${error}`);

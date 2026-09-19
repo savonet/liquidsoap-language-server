@@ -49,9 +49,29 @@ const waitForExport = async (
 export const scriptPath = (uri: string): string =>
   uri.startsWith("file:") ? fileURLToPath(uri) : "";
 
+/**
+ * Skips checking the script the analysis last checked, which diagnostics and
+ * hover on an unchanged document both ask for.
+ */
+export const rememberLastCheck = (analysis: Analysis): Analysis => {
+  let last: { source: string; file: string; result: RawDiagnostic[] } | undefined;
+  return {
+    check: (source, file) => {
+      if (last?.source !== source || last.file !== file)
+        last = { source, file, result: analysis.check(source, file) };
+      return last.result;
+    },
+    typeAt: (line, column) => analysis.typeAt(line, column),
+    localsAt: (line, column) => analysis.localsAt(line, column),
+    scopeAt: (line, column) => analysis.scopeAt(line, column),
+    methodsAt: (line, column) => analysis.methodsAt(line, column),
+    nullMethods: () => analysis.nullMethods(),
+  };
+};
+
 export const loadAnalysis = async (dir: string): Promise<Analysis> => {
   const exported = require(path.join(dir, "analysis_wasm.bc.wasm.js"));
   const module = await waitForExport(exported);
   module.loadEnv(fs.readFileSync(path.join(dir, "stdlib.types")));
-  return module;
+  return rememberLastCheck(module);
 };
