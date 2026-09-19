@@ -11,22 +11,21 @@ let load_env dump =
          (Typed_array.String.of_uint8Array dump))
 
 let diagnostic_to_js { Analysis.severity; code; pos; message } =
-  let line, column =
+  let { Liquidsoap_lang_prelude.Pos.fname; lstart; cstart; lstop; cstop } =
     match pos with
-      | Some pos ->
-          let { Liquidsoap_lang_prelude.Pos.lstart; cstart; _ } =
-            Liquidsoap_lang_prelude.Pos.unpack pos
-          in
-          (lstart, cstart)
-      | None -> (0, 0)
+      | Some pos -> Liquidsoap_lang_prelude.Pos.unpack pos
+      | None -> { fname = ""; lstart = 1; cstart = 0; lstop = 1; cstop = 0 }
   in
   object%js
     val severity =
       Js.string (match severity with `Error -> "error" | `Warning -> "warning")
 
     val code = code
-    val line = line
-    val column = column
+    val file = Js.string fname
+    val startLine = lstart
+    val startColumn = cstart
+    val endLine = lstop
+    val endColumn = cstop
     val message = Js.string message
   end
 
