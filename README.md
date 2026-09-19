@@ -1,68 +1,121 @@
 # liquidsoap-language-server
 
-A [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) server for [Liquidsoap](https://github.com/savonet/liquidsoap) scripts. It works with any editor that has an LSP client: VS Code, Neovim, Emacs, Helix, Zed and others.
+Editor support for [Liquidsoap](https://www.liquidsoap.info) scripts: errors as you type, types and documentation on hover, completion, and more. It speaks the [Language Server Protocol](https://microsoft.github.io/language-server-protocol/), so it works in any editor that has an LSP client. Setup for Neovim, Helix and Emacs is below.
 
-The server runs Liquidsoap's own parser and typechecker, compiled to WebAssembly. It typechecks scripts against the full standard library without a native Liquidsoap binary.
+The server runs Liquidsoap's own parser and typechecker, so it reports the same errors as `liquidsoap --check`, without running your script. It does not need Liquidsoap to be installed.
 
-This is early work. The server reports diagnostics (syntax and type errors, warnings), shows documentation or the type of the expression under the cursor on hover, completes names in scope and methods after `.`, goes to the definition of a name the script binds, and lists a script's definitions as document symbols, including in scripts that do not parse.
+This is early work. Feedback and bug reports are welcome on the [issue tracker](https://github.com/savonet/liquidsoap-language-server/issues).
 
-A script being edited usually does not parse. The patcher tries to replace invalid parts of the script with a universal placeholder, so the rest of the script can still be typechecked.
+## Features
 
-## Layout
+- **Errors and warnings** while you type: syntax errors, type errors, unused variables. Every type error in a script is reported, not just the first one. An error inside a file you `%include` shows on the `%include` line, with a link to where it is.
+- **Hover**: the documentation of standard library functions, or the type of the expression under the cursor.
+- **Completion**: the names in scope, and the methods of a value after `.`, with the documentation of standard library functions.
+- **Signature help**: the parameters of a standard library function while you type its arguments.
+- **Go to definition** of a name your script defines, including in files you `%include`.
+- **Document outline**: the definitions of the script, nested inside the functions that define them.
+- **Formatting** with [liquidsoap-prettier](https://github.com/savonet/liquidsoap-prettier). A `.prettierrc` next to your script is respected.
 
-This is a pnpm workspace. Dependency versions are set once, in the catalog in `pnpm-workspace.yaml`.
+A script you are editing is usually not valid Liquidsoap at every keystroke. The server tries to replace the broken parts with a universal placeholder, so that the rest of the script keeps its errors, types and completions.
 
-- `analysis/`: `analysis_wasm.ml` wraps `Liquidsoap_tooling.Analysis` from Liquidsoap for JavaScript, built with wasm_of_ocaml. `wasm_stubs.wat` provides the runtime primitives it needs that have no wasm implementation.
-- `patcher/`: turns a broken script into a valid one, with tree-sitter and the tree-sitter-liquidsoap grammar compiled to wasm. Its golden tests are in `patcher/test/cases/` and `patcher/test/expected/`; run them with `UPDATE=1` to rewrite the expected files.
-- `server/`: the language server, in TypeScript. `pnpm run build` compiles it into `server/dist/`, next to the wasm module and `stdlib.types`.
+The server knows the standard library of the Liquidsoap version it was built with, not of the one installed on your machine. Operators that come from plugins installed on a machine, such as LV2 and LADSPA, are not documented.
 
-## Building
+## Installing
 
-The analysis module builds against the Liquidsoap libraries. From a Liquidsoap checkout:
+The server needs [Node.js](https://nodejs.org) 22 or later.
 
-```sh
-cd /path/to/liquidsoap
-dune build @install src/js/stdlib.types
-_build/default/src/bin/liquidsoap.exe --stdlib ./src/libs/stdlib.liq --list-functions-json > functions.json
-```
-
-`stdlib.types` is the standard library's typing environment. It must come from the same Liquidsoap commit as the libraries: loading checks the version. `functions.json` holds the documentation shown on hover.
-
-Then here:
+Packages are not published yet, so the server has to be built from source. Building it needs the Liquidsoap sources and an OCaml toolchain; [CONTRIBUTING.md](CONTRIBUTING.md) has the steps. The server then starts with:
 
 ```sh
-(cd analysis && OCAMLPATH=/path/to/liquidsoap/_build/install/default/lib dune build --profile release ./analysis_wasm.bc.wasm.js)
-pnpm install
-TREE_SITTER_LIQUIDSOAP=/path/to/tree-sitter-liquidsoap pnpm --filter liquidsoap-patcher run build:grammar
-LIQUIDSOAP_STDLIB_TYPES=/path/to/liquidsoap/_build/default/src/js/stdlib.types \
-LIQUIDSOAP_FUNCTIONS_JSON=/path/to/liquidsoap/functions.json \
-  pnpm run build
-pnpm test
+node /path/to/liquidsoap-language-server/server/dist/server.js --stdio
 ```
 
-## Using it
+In the editor setups below, replace `/path/to/liquidsoap-language-server` with where you built it. Nothing else needs to be installed next to `server/dist/`: the server's standard library and documentation are in it.
 
-Start the server with `node server/dist/server.js --stdio`. Run the file directly: the wasm module is found next to the script Node was started with.
+## Setting up your editor
 
-With Neovim 0.11 or later:
+### Neovim
+
+Neovim 0.11 or later configures language servers without plugins. Add this to your `init.lua`:
 
 ```lua
 vim.filetype.add({ extension = { liq = "liquidsoap" } })
 
 vim.lsp.config("liquidsoap", {
-  cmd = { "node", "/path/to/liquidsoap-language-server/server/dist/server.js", "--stdio" },
+  cmd = {
+    "node",
+    "/path/to/liquidsoap-language-server/server/dist/server.js",
+    "--stdio",
+  },
   filetypes = { "liquidsoap" },
   root_markers = { ".git" },
 })
 vim.lsp.enable("liquidsoap")
 ```
 
-## Timing
+Open a `.liq` file, and `:checkhealth vim.lsp` should list the `liquidsoap` client. With Neovim's default mappings:
 
-`analysis/spike.cjs` loads the module and `stdlib.types`, then times a few checks. Copy the build output next to it first:
+- errors show inline; `]d` and `[d` go to the next and previous one,
+- `K` shows the documentation or type under the cursor,
+- `CTRL-]` goes to a definition,
+- `gO` lists the script's definitions,
+- `CTRL-S` in insert mode shows a function's parameters,
+- `CTRL-X CTRL-O` in insert mode completes,
+- `:lua vim.lsp.buf.format()` formats the script.
+
+### Helix
+
+Add this to `~/.config/helix/languages.toml`:
+
+```toml
+[language-server.liquidsoap]
+command = "node"
+args = ["/path/to/liquidsoap-language-server/server/dist/server.js", "--stdio"]
+
+[[language]]
+name = "liquidsoap"
+scope = "source.liquidsoap"
+file-types = ["liq"]
+comment-token = "#"
+indent = { tab-width = 2, unit = "  " }
+language-servers = ["liquidsoap"]
+```
+
+`hx --health liquidsoap` should find the language server. Errors show inline, `space k` shows documentation, `g d` goes to a definition, `space s` lists the script's definitions, and `:format` formats the script. Completion and signature help show up as you type.
+
+### Emacs
+
+Emacs 29 and later come with the Eglot client. Liquidsoap's Emacs mode, `liquidsoap-mode`, is installed by the opam package of the same name (`opam install liquidsoap-mode`), or can be copied from [`scripts/liquidsoap-mode.el`](https://github.com/savonet/liquidsoap/blob/main/scripts/liquidsoap-mode.el) in the Liquidsoap repository. Then, in your init file:
+
+```elisp
+;; Where opam installs the mode; use your own directory if you copied it.
+(add-to-list 'load-path
+             (expand-file-name "share/emacs/site-lisp"
+                               (string-trim (shell-command-to-string "opam var prefix"))))
+(require 'liquidsoap-mode)
+
+(with-eval-after-load 'eglot
+  (add-to-list 'eglot-server-programs
+               '(liquidsoap-mode . ("node" "/path/to/liquidsoap-language-server/server/dist/server.js" "--stdio"))))
+(add-hook 'liquidsoap-mode-hook #'eglot-ensure)
+```
+
+Errors show with Flymake, documentation and a function's parameters in the echo area, `M-.` goes to a definition, `M-x imenu` lists the script's definitions, `C-M-i` completes, and `M-x eglot-format-buffer` formats the script.
+
+### Visual Studio Code
+
+The Liquidsoap extension for VS Code does not start the language server yet.
+
+### Other editors
+
+Any LSP client can start the server. It communicates over standard input and output, and handles files with the `.liq` extension. Configure your client to run:
 
 ```sh
-mkdir -p /tmp/spike
-cp -r analysis/_build/default/analysis_wasm.bc.wasm.js analysis/_build/default/analysis_wasm.bc.wasm.assets analysis/spike.cjs /tmp/spike/
-node /tmp/spike/spike.cjs /tmp/spike/analysis_wasm.bc.wasm.js /path/to/liquidsoap/_build/default/src/js/stdlib.types
+node /path/to/liquidsoap-language-server/server/dist/server.js --stdio
 ```
+
+## Troubleshooting
+
+- **Nothing happens when opening a `.liq` file.** Check that your editor starts the server, with the health commands above. The server logs its errors to your editor's language server log.
+- **The server reports errors in a script that `liquidsoap` runs fine.** The server may know a different Liquidsoap version than yours: see [Features](#features). Please report other cases on the issue tracker, with the script.
+- **An `%include`d file is not found.** Includes resolve next to the script, as `liquidsoap` does. A buffer that is not saved to a file cannot include files by a relative path.
