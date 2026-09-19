@@ -49,6 +49,17 @@ jobs:
           opam-repositories: |
             default: git+https://github.com/ocaml/opam-repository.git#${{ env.OPAM_REPOSITORY_REF }}
 
+      # Liquidsoap builds its synced modules from its own tree, so a switch whose
+      # opam copies are older than the checkout still builds it.
+      - name: Locate the opam switch
+        id: switch
+        run: echo "prefix=$(opam var prefix)" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/cache@v4
+        with:
+          path: ${{ steps.switch.outputs.prefix }}
+          key: opam-switch-${{ runner.os }}-${{ env.OPAM_REPOSITORY_REF }}-${{ hashFiles('_deps/liquidsoap/opam/*.opam', '_deps/liquidsoap/src/modules/synced/**/*.opam') }}
+
       # The synced modules are liquidsoap's own copies, so they are pinned. Only
       # the required dependencies are installed, and binaryen comes from its
       # release since apt's is too old.
