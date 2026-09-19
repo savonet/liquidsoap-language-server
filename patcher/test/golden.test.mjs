@@ -5,7 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { before, test } from "node:test";
 import { fileURLToPath } from "node:url";
-import { createPatcher, originalOffset } from "../dist/index.js";
+import { createPatcher, originalOffset, patchedOffset } from "../dist/index.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const casesDir = path.join(here, "cases");
@@ -39,4 +39,7 @@ test("offsets map back through edits", () => {
   assert.equal(originalOffset(edits, 2), 2);
   assert.equal(originalOffset(edits, 5), 4);
   assert.equal(originalOffset(edits, 10), 11);
+  assert.equal(patchedOffset(edits, 2), 2);
+  assert.equal(patchedOffset(edits, 5), undefined);
+  assert.equal(patchedOffset(edits, 11), 10);
 });

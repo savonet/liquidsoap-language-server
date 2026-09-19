@@ -247,6 +247,23 @@ const shifted = <T extends { start: number; end: number }>(
 ): T[] =>
   items.map((item) => ({ ...item, start: item.start + by, end: item.end + by }));
 
+/**
+ * Maps an offset in the original source to the patched source, or `undefined`
+ * when the patcher replaced the text there.
+ */
+export const patchedOffset = (
+  edits: Edit[],
+  offset: number,
+): number | undefined => {
+  let delta = 0;
+  for (const edit of edits) {
+    if (offset < edit.start) break;
+    if (offset < edit.end) return undefined;
+    delta += edit.text.length - (edit.end - edit.start);
+  }
+  return offset + delta;
+};
+
 export type Patcher = (source: string) => Patched;
 
 export const createPatcher = async (
