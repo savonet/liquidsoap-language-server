@@ -82,6 +82,11 @@ export const startServer = async () => {
         textDocument: { uri: pathToFileURL(file).href },
         options: { tabSize: 2, insertSpaces: true },
       }),
+    signature: (file, line, character) =>
+      connection.sendRequest("textDocument/signatureHelp", {
+        textDocument: { uri: pathToFileURL(file).href },
+        position: { line, character },
+      }),
     symbols: (file) =>
       connection.sendRequest("textDocument/documentSymbol", {
         textDocument: { uri: pathToFileURL(file).href },

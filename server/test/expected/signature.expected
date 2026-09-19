@@ -1,0 +1,27 @@
+--- diagnostics ---
+error 5 3:9-3:22: this value has type
+  string
+but it should be a subtype of
+  {float}
+warning 6 4:6-4:10: Top-level variable sine is overridden!
+--- signature 1:9 ---
+sine(?id : string?, ?amplitude : {float}, ?duration : float?, {float})
+active: {float}
+--- signature 1:24 ---
+sine(?id : string?, ?amplitude : {float}, ?duration : float?, {float})
+active: {float}
+--- signature 2:15 ---
+sine(?id : string?, ?amplitude : {float}, ?duration : float?, {float})
+active: (none)
+--- signature 3:33 ---
+sine(?id : string?, ?amplitude : {float}, ?duration : float?, {float})
+active: ?duration : float?
+--- signature 5:7 ---
+(none)
+--- signature 7:15 ---
+(none)
+--- signature 8:18 ---
+amplify(?id : string?, ?override : {string?}, source(audio='a, 'b))
+active: (none)
+--- signature 9:0 ---
+(none)

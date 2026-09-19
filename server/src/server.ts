@@ -14,6 +14,7 @@ import { diagnose } from "./diagnostics";
 import { format } from "./formatting";
 import { loadDocs } from "./docs";
 import { hover } from "./hover";
+import { signatureHelp } from "./signature";
 import { symbols } from "./symbols";
 
 const connection = createConnection(ProposedFeatures.all);
@@ -30,6 +31,7 @@ connection.onInitialize(() => ({
     documentSymbolProvider: true,
     definitionProvider: true,
     documentFormattingProvider: true,
+    signatureHelpProvider: { triggerCharacters: ["(", ","] },
     completionProvider: { triggerCharacters: ["."] },
   },
 }));
@@ -75,6 +77,12 @@ connection.onDocumentFormatting(async ({ textDocument }) => {
   const document = documents.get(textDocument.uri);
   if (!document) return [];
   return format(document);
+});
+
+connection.onSignatureHelp(async ({ textDocument, position }) => {
+  const document = documents.get(textDocument.uri);
+  if (!document) return null;
+  return signatureHelp(await analysis, await patcher, docs, document, position);
 });
 
 connection.onDocumentSymbol(async ({ textDocument }) => {
