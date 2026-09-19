@@ -1,0 +1,15 @@
+(executable
+ (name analysis_wasm)
+ (modes wasm js)
+ (modules analysis_wasm)
+ (preprocess
+  (pps js_of_ocaml-ppx))
+ (js_of_ocaml
+  (flags --effects=disabled))
+ (wasm_of_ocaml
+  (wasm_files wasm_stubs.wat))
+ (libraries
+  js_of_ocaml
+  liquidsoap-js
+  liquidsoap-lang.data
+  liquidsoap-lang.tooling))
