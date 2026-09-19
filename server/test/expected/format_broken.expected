@@ -1,0 +1,5 @@
+--- diagnostics ---
+error syntax 4:0-4:0: Syntax error: missing an expression.
+warning 4 2:0-4:0: Unused variable y
+--- format ---
+(unchanged)

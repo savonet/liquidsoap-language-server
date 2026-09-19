@@ -1,5 +1,5 @@
 // Each script in cases/ is opened in the server, and its diagnostics and the
-// answers to its `#? hover|complete|definition L:C` and `#? symbols` queries are checked against
+// answers to its `#? hover|complete|definition L:C` and `#? symbols|format` queries are checked against
 // expected/. Lines start at 1 and characters are UTF-16 code units from 0, as
 // the editor counts them. Run with UPDATE=1 to rewrite them, then review the
 // diff.
@@ -75,6 +75,10 @@ const answer = async (file, { query, line, character }) => {
     return location
       ? `${path.relative(casesDir, fileURLToPath(location.uri))} ${printRange(location.range)}`
       : "(none)";
+  }
+  if (query === "format") {
+    const edits = await server.format(file);
+    return edits.length ? edits.map(({ newText }) => newText).join("") : "(unchanged)";
   }
   if (query === "symbols") return printSymbols(await server.symbols(file)).join("\n");
   if (query === "hover")

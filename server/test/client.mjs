@@ -77,6 +77,11 @@ export const startServer = async () => {
         textDocument: { uri: pathToFileURL(file).href },
         position: { line, character },
       }),
+    format: (file) =>
+      connection.sendRequest("textDocument/formatting", {
+        textDocument: { uri: pathToFileURL(file).href },
+        options: { tabSize: 2, insertSpaces: true },
+      }),
     symbols: (file) =>
       connection.sendRequest("textDocument/documentSymbol", {
         textDocument: { uri: pathToFileURL(file).href },

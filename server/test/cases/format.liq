@@ -1,0 +1,4 @@
+x=1
+def f(a)=a+x end
+print(f(2))
+#? format

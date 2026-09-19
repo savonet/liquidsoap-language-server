@@ -19,6 +19,8 @@
   },
   "dependencies": {
     "liquidsoap-patcher": "workspace:*",
+    "liquidsoap-prettier": "catalog:",
+    "prettier": "catalog:",
     "vscode-languageserver": "catalog:",
     "vscode-languageserver-textdocument": "catalog:"
   },
