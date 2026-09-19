@@ -20,6 +20,13 @@ if (!input || !fs.existsSync(input)) {
 // generated, which say nothing about the user's machine.
 const machineSpecific = /^(lv2|ladspa)\./;
 
+// Older Liquidsoap versions key arguments by label, which keeps only one of a
+// function's unlabeled arguments; newer ones list them.
+const argumentList = (args) =>
+  Array.isArray(args)
+    ? args
+    : Object.entries(args ?? {}).map(([label, arg]) => ({ label, ...arg }));
+
 const docs = {};
 for (const [name, entry] of Object.entries(
   JSON.parse(fs.readFileSync(input, "utf8")),
@@ -29,7 +36,7 @@ for (const [name, entry] of Object.entries(
   docs[name] = {
     type: entry.type,
     description: entry.description ?? "",
-    arguments: Object.entries(entry.arguments ?? {}).map(([label, arg]) => ({
+    arguments: argumentList(entry.arguments).map(({ label, ...arg }) => ({
       label,
       type: arg.type,
       default: arg.default ?? null,
