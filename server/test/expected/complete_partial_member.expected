@@ -1,0 +1,188 @@
+--- diagnostics ---
+error 5 1:4-1:10: this value has no method `le`
+  Its type is ((?fields : bool, ?print_binary : bool, 'A) -> string)
+.{
+  annotate : 
+  {parse : (string) -> [string * string] * string
+  },
+  apic : 
+  {
+    parse : (string) -> string
+            .{description : string, mime : string, picture_type : int}
+  },
+  base64 : 
+  {decode : (string) -> string, encode : (string) -> string
+  },
+  binary : 
+  {
+    of_int : (?pad : int, ?little_endian : bool, int) -> string,
+    to_int : (?little_endian : bool, string) -> int
+  },
+  bytes : ((string) -> [string])
+  .{length : (string) -> int
+  },
+  capitalize : (?capitalize : bool, ?space_sensitive : bool, string) ->
+               string,
+  case : (?lower : bool, string) -> string,
+  char : ((int) -> string)
+  .{
+    ascii : [int]
+    .{
+      alphabet : [int],
+      control : [int],
+      number : [int],
+      printable : [int],
+      random : (?[int]) -> string
+    }
+  },
+  chars : (?encoding : string?, string) -> [string],
+  compare : (string, string) -> int,
+  concat : (?separator : string, [string]) -> string,
+  contains : (?encoding : string?, ?prefix : string, ?substring : string,
+              ?suffix : string, string) -> bool,
+  data_uri : 
+  {
+    decode : (string) -> string.{mime : string}?,
+    encode : (?base64 : bool, mime : string, string) -> string
+  },
+  digest : (string) -> string,
+  escape : ((?special_char : ((encoding : string, string) -> bool)?,
+             ?escape_char : ((encoding : string, string) -> string)?,
+             ?encoding : string?, string) -> string)
+  .{
+    all : (?format : string, string) -> string,
+    html : (?encoding : string?, string) -> string,
+    special_char : (?encoding : string, string) -> bool
+  },
+  extract : (pattern : string, string) -> [int * string]
+            .{groups : [string * string]},
+  float : (?decimal_places : int?, float) -> string,
+  getter : 
+  {
+    concat : ([{string}]) -> {string},
+    flush : (?separator : string, {string}) -> string,
+    single : (string) -> () -> string
+  },
+  hex_of_int : (?pad : int, int) -> string,
+  id : ((?category : string, string) -> string)
+  .{default : (default : string, string?) -> string
+  },
+  index : (substring : string, string) -> int,
+  is_int : (string) -> bool,
+  length : (?encoding : string?, string) -> int,
+  lowercase : (string) -> string,
+  make : (?char_code : int, int) -> string,
+  match : (pattern : string, string) -> bool,
+  nth : (string, int) -> int,
+  null_terminated : (string) -> string,
+  of_int : 'a.(?digits : int, 'a) -> string,
+  pic : 
+  {
+    parse : (string) -> string
+            .{description : string, format : string, picture_type : int}
+  },
+  quote : (?encoding : string?, string) -> string,
+  recode : (?in_enc : string?, ?out_enc : string, string) -> string,
+  replace : (pattern : string, ((string) -> string), string) -> string,
+  residual : (?encoding : string?, prefix : string, string) -> string?,
+  spaces : (int) -> string,
+  split : ((separator : string, string) -> [string])
+  .{
+    first : (?encoding : string?, separator : string, string) ->
+            string * string
+  },
+  sub : (string, start : int, ?encoding : string?, length : int) -> string,
+  to_float : (?default : float, string) -> float,
+  to_int : (?default : int, string) -> int,
+  trim : (string) -> string,
+  unescape : (string) -> string,
+  unquote : (string) -> string,
+  uppercase : (string) -> string,
+  utf8 : 
+  {escape : (string) -> string
+  }
+}.
+--- complete 1:13 ---
+annotate : {parse : (string) -> [string * string] * string}
+apic : {
+  parse : (string) -> string
+          .{description : string, mime : string, picture_type : int}
+}
+base64 : {decode : (string) -> string, encode : (string) -> string}
+binary : {
+  of_int : (?pad : int, ?little_endian : bool, int) -> string,
+  to_int : (?little_endian : bool, string) -> int
+}
+bytes : ((string) -> [string]).{length : (string) -> int}
+capitalize : (?capitalize : bool, ?space_sensitive : bool, string) -> string
+case : (?lower : bool, string) -> string
+char : ((int) -> string)
+.{
+  ascii : [int]
+  .{
+    alphabet : [int],
+    control : [int],
+    number : [int],
+    printable : [int],
+    random : (?[int]) -> string
+  }
+}
+chars : (?encoding : string?, string) -> [string]
+compare : (string, string) -> int
+concat : (?separator : string, [string]) -> string
+contains : (?encoding : string?, ?prefix : string, ?substring : string,
+ ?suffix : string, string) -> bool
+data_uri : {
+  decode : (string) -> string.{mime : string}?,
+  encode : (?base64 : bool, mime : string, string) -> string
+}
+digest : (string) -> string
+escape : ((?special_char : ((encoding : string, string) -> bool)?,
+  ?escape_char : ((encoding : string, string) -> string)?,
+  ?encoding : string?, string) -> string)
+.{
+  all : (?format : string, string) -> string,
+  html : (?encoding : string?, string) -> string,
+  special_char : (?encoding : string, string) -> bool
+}
+extract : (pattern : string, string) -> [int * string].{groups : [string * string]}
+float : (?decimal_places : int?, float) -> string
+getter : {
+  concat : ([{string}]) -> {string},
+  flush : (?separator : string, {string}) -> string,
+  single : (string) -> () -> string
+}
+hex_of_int : (?pad : int, int) -> string
+id : ((?category : string, string) -> string)
+.{default : (default : string, string?) -> string}
+index : (substring : string, string) -> int
+is_int : (string) -> bool
+length : (?encoding : string?, string) -> int
+lowercase : (string) -> string
+make : (?char_code : int, int) -> string
+match : (pattern : string, string) -> bool
+nth : (string, int) -> int
+null_terminated : (string) -> string
+of_int : (?digits : int, 'a) -> string
+pic : {
+  parse : (string) -> string
+          .{description : string, format : string, picture_type : int}
+}
+quote : (?encoding : string?, string) -> string
+recode : (?in_enc : string?, ?out_enc : string, string) -> string
+replace : (pattern : string, ((string) -> string), string) -> string
+residual : (?encoding : string?, prefix : string, string) -> string?
+spaces : (int) -> string
+split : ((separator : string, string) -> [string])
+.{
+  first : (?encoding : string?, separator : string, string) ->
+          string * string
+}
+sub : (string, start : int, ?encoding : string?, length : int) -> string
+to_float : (?default : float, string) -> float
+to_int : (?default : int, string) -> int
+trim : (string) -> string
+unescape : (string) -> string
+unquote : (string) -> string
+uppercase : (string) -> string
+utf8 : {escape : (string) -> string}

@@ -1,0 +1,6 @@
+--- diagnostics ---
+error syntax 1:0-5:0: Syntax error.
+error 5 5:8-5:11: this value has type
+  string
+but it should be a subtype of
+  int (inferred at line 3, char 4)

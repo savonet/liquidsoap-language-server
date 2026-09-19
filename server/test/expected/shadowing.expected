@@ -1,0 +1,28 @@
+--- diagnostics ---
+warning 6 2:0-4:3: Top-level variable sine is overridden!
+warning 6 9:0-9:32: Top-level variable string is overridden!
+--- hover 1:5 ---
+```liquidsoap
+sine : (?id : string?, ?amplitude : {float}, ?duration : float?, ?{float}) ->
+source(audio=pcm*)
+```
+
+Generate a sine wave.
+
+Arguments:
+- `id` : `string?` (default `null`) — Force the value of the source ID.
+- `amplitude` : `{float}` (default `1.0`) — Maximal value of the waveform.
+- `duration` : `float?` (default `null`) — Duration in seconds (`null` means infinite).
+- `(unlabeled)` : `{float}` (default `440.0`) — Frequency of the sine.
+--- hover 5:5 ---
+```liquidsoap
+() -> int
+```
+--- hover 7:3 ---
+```liquidsoap
+int
+```
+--- hover 10:12 ---
+```liquidsoap
+(string) -> int
+```

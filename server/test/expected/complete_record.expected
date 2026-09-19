@@ -1,0 +1,5 @@
+--- diagnostics ---
+error syntax 2:5-2:6: Syntax error.
+--- complete 2:6 ---
+alpha : int
+beta : int

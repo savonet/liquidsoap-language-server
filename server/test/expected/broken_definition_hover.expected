@@ -1,0 +1,6 @@
+--- diagnostics ---
+error syntax 1:0-5:0: Syntax error.
+--- hover 6:7 ---
+```liquidsoap
+string
+```

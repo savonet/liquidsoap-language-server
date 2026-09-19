@@ -1,0 +1,5 @@
+--- diagnostics ---
+error syntax 2:10-2:11: Syntax error.
+warning 6 1:0-1:19: Top-level variable string is overridden!
+--- complete 2:11 ---
+only : int

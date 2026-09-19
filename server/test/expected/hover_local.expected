@@ -1,0 +1,9 @@
+--- diagnostics ---
+--- hover 2:4 ---
+```liquidsoap
+int
+```
+--- hover 4:0 ---
+(none)
+--- hover 5:1 ---
+(none)

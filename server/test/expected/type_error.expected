@@ -1,0 +1,5 @@
+--- diagnostics ---
+error 5 1:8-1:11: this value has type
+  string
+but it should be a subtype of
+  int (inferred at line 1, char 4)
