@@ -35,8 +35,6 @@ const waitForExport = async (
   throw new Error("The analysis module did not initialize.");
 };
 
-// The wasm loader finds its assets next to the main script, so `dir` must be
-// the directory of the script Node was started with.
 export const loadAnalysis = async (dir: string): Promise<Analysis> => {
   const exported = require(path.join(dir, "analysis_wasm.bc.wasm.js"));
   const module = await waitForExport(exported);

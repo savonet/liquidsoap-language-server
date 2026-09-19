@@ -4,13 +4,16 @@ A [Language Server Protocol](https://microsoft.github.io/language-server-protoco
 
 The server runs Liquidsoap's own parser and typechecker, compiled to WebAssembly. It typechecks scripts against the full standard library without a native Liquidsoap binary.
 
-This is early work: the server reports diagnostics (type and parse errors, warnings) for scripts that parse. Hover and completion come next.
+This is early work: the server reports diagnostics (syntax and type errors, warnings), including for scripts that do not parse. Hover and completion come next.
+
+A script being edited usually does not parse. The patcher uses tree-sitter to find the broken parts and replaces them with `💣()`, a Liquidsoap expression that fits any type, so the typechecker sees the rest of the script as usual. Syntax errors are reported where tree-sitter finds them.
 
 ## Layout
 
 This is a pnpm workspace. Dependency versions are set once, in the catalog in `pnpm-workspace.yaml`.
 
 - `analysis/`: `analysis_wasm.ml` wraps `Liquidsoap_tooling.Analysis` from Liquidsoap for JavaScript, built with wasm_of_ocaml. `wasm_stubs.wat` provides the runtime primitives it needs that have no wasm implementation.
+- `patcher/`: turns a broken script into a valid one, with tree-sitter and the tree-sitter-liquidsoap grammar compiled to wasm. Its golden tests are in `patcher/test/cases/` and `patcher/test/expected/`; run them with `UPDATE=1` to rewrite the expected files.
 - `server/`: the language server, in TypeScript. `pnpm run build` compiles it into `server/dist/`, next to the wasm module and `stdlib.types`.
 
 ## Building
@@ -29,6 +32,7 @@ Then here:
 ```sh
 (cd analysis && OCAMLPATH=/path/to/liquidsoap/_build/install/default/lib dune build --profile release ./analysis_wasm.bc.wasm.js)
 pnpm install
+TREE_SITTER_LIQUIDSOAP=/path/to/tree-sitter-liquidsoap pnpm --filter liquidsoap-patcher run build:grammar
 LIQUIDSOAP_STDLIB_TYPES=/path/to/liquidsoap/_build/default/src/js/stdlib.types pnpm run build
 pnpm test
 ```

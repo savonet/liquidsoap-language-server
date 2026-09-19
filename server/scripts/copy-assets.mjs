@@ -22,7 +22,16 @@ if (!stdlibTypes || !fs.existsSync(stdlibTypes))
   fail("set LIQUIDSOAP_STDLIB_TYPES to the stdlib.types file to ship.");
 
 fs.mkdirSync(dist, { recursive: true });
-fs.copyFileSync(loader, path.join(dist, "analysis_wasm.bc.wasm.js"));
+// The loader looks for its assets next to the script Node was started with.
+// Next to the loader itself works however the server is started.
+const mainDirectory = /[\w$]+\.dirname\(require\.main\.filename\)/g;
+const loaderSource = fs.readFileSync(loader, "utf8");
+if (!mainDirectory.test(loaderSource))
+  fail("the wasm loader no longer locates its assets as expected.");
+fs.writeFileSync(
+  path.join(dist, "analysis_wasm.bc.wasm.js"),
+  loaderSource.replace(mainDirectory, "__dirname"),
+);
 fs.rmSync(path.join(dist, "analysis_wasm.bc.wasm.assets"), {
   recursive: true,
   force: true,
