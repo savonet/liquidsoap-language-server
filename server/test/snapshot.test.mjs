@@ -1,5 +1,5 @@
 // Each script in cases/ is opened in the server, and its diagnostics and the
-// answers to its `#? hover|complete|definition|signature L:C` and `#? symbols|format` queries are checked against
+// answers to its `#? hover|complete|definition|signature L:C`, `#? resolve L:C label` and `#? symbols|format` queries are checked against
 // expected/. Lines start at 1 and characters are UTF-16 code units from 0, as
 // the editor counts them. Run with UPDATE=1 to rewrite them, then review the
 // diff.
@@ -17,23 +17,26 @@ const cases = fs.readdirSync(casesDir).filter((f) => f.endsWith(".liq"));
 
 let server;
 // Every script has the standard library's names in scope, so completions show
-// them as one line.
+// them as one line, unless the script binds one itself.
 let standardNames;
+let standardItems;
 before(async () => {
   server = await startServer();
   const empty = path.join(casesDir, "empty.liq");
   await server.open(empty, "");
   const items = await server.complete(empty, 0, 0);
   standardNames = new Set(items.map(({ label }) => label));
+  standardItems = new Map(items.map((item) => [item.label, JSON.stringify(item)]));
 });
 after(() => server.stop());
 
 const queries = (source) =>
-  [...source.matchAll(/^#\? (\w+)(?: (\d+):(\d+))?$/gm)].map(
-    ([, query, line, character]) => ({
+  [...source.matchAll(/^#\? (\w+)(?: (\d+):(\d+))?(?: (\S+))?$/gm)].map(
+    ([, query, line, character, label]) => ({
       query,
       line: line && Number(line),
       character: character && Number(character),
+      label,
     }),
   );
 
@@ -50,15 +53,18 @@ const printDiagnostic = ({ severity, code, range, message, relatedInformation = 
     ...relatedInformation.map(printRelated),
   ].join("\n");
 
-const variableKind = 6;
+const kindNames = { 2: "method", 3: "function", 5: "field", 6: "variable" };
 
 const printCompletions = (items) => {
   const own = items.filter(
-    ({ label, kind }) => kind !== variableKind || !standardNames.has(label),
+    (item) => item.detail || standardItems.get(item.label) !== JSON.stringify(item),
   );
   const lines = own
     .sort((a, b) => a.label.localeCompare(b.label))
-    .map(({ label, detail }) => (detail ? `${label} : ${detail}` : label));
+    .map(
+      ({ label, kind, detail, data }) =>
+        `${label} (${kindNames[kind] ?? kind}${data ? ", documented" : ""})${detail ? ` : ${detail}` : ""}`,
+    );
   if (own.length < items.length) lines.push("(standard library)");
   return lines.join("\n");
 };
@@ -69,7 +75,13 @@ const printSymbols = (symbols, indent = "") =>
     ...printSymbols(children, `${indent}  `),
   ]);
 
-const answer = async (file, { query, line, character }) => {
+const answer = async (file, { query, line, character, label }) => {
+  if (query === "resolve") {
+    const items = await server.complete(file, line - 1, character);
+    const item = items.find((candidate) => candidate.label === label);
+    if (!item) return "(no such item)";
+    return (await server.resolve(item)).documentation?.value ?? "(undocumented)";
+  }
   if (query === "definition") {
     const location = await server.definition(file, line - 1, character);
     return location

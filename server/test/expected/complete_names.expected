@@ -1,6 +1,6 @@
 --- diagnostics ---
 error 4 3:2-3:4: Undefined variable lo
 --- complete 3:4 ---
-gain
-local
+gain (variable)
+local (variable)
 (standard library)

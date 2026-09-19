@@ -8,7 +8,7 @@ import {
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { loadAnalysis } from "./analysis";
-import { complete } from "./completion";
+import { complete, resolve } from "./completion";
 import { definition } from "./definition";
 import { diagnose } from "./diagnostics";
 import { format } from "./formatting";
@@ -32,7 +32,7 @@ connection.onInitialize(() => ({
     definitionProvider: true,
     documentFormattingProvider: true,
     signatureHelpProvider: { triggerCharacters: ["(", ","] },
-    completionProvider: { triggerCharacters: ["."] },
+    completionProvider: { triggerCharacters: ["."], resolveProvider: true },
   },
 }));
 
@@ -64,7 +64,7 @@ connection.onHover(async ({ textDocument, position }) => {
 connection.onCompletion(async ({ textDocument, position }) => {
   const document = documents.get(textDocument.uri);
   if (!document) return [];
-  return complete(await analysis, await patcher, document, position);
+  return complete(await analysis, await patcher, docs, document, position);
 });
 
 connection.onDefinition(async ({ textDocument, position }) => {
@@ -72,6 +72,8 @@ connection.onDefinition(async ({ textDocument, position }) => {
   if (!document) return null;
   return definition(await analysis, await patcher, document, position);
 });
+
+connection.onCompletionResolve((completion) => resolve(docs, completion));
 
 connection.onDocumentFormatting(async ({ textDocument }) => {
   const document = documents.get(textDocument.uri);

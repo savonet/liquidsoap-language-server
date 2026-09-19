@@ -87,6 +87,7 @@ export const startServer = async () => {
         textDocument: { uri: pathToFileURL(file).href },
         position: { line, character },
       }),
+    resolve: (item) => connection.sendRequest("completionItem/resolve", item),
     symbols: (file) =>
       connection.sendRequest("textDocument/documentSymbol", {
         textDocument: { uri: pathToFileURL(file).href },

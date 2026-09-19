@@ -5,8 +5,8 @@ error 5 2:8-2:11: this value has type
 but it should be a subtype of
   int (inferred at line 2, char 4)
 --- complete 5:6 ---
-alpha : int
-beta : int
+alpha (field) : int
+beta (field) : int
 --- hover 4:0 ---
 ```liquidsoap
 int

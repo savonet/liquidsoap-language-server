@@ -1,0 +1,129 @@
+--- diagnostics ---
+error syntax 6:10-6:11: Syntax error.
+error 4 2:2-2:3: Undefined variable s
+error 5 5:4-5:8: this value has no method `le`
+  Its type is {
+  add : 'a.('a, ['a]) -> ['a],
+  append : 'a.(['a], ['a]) -> ['a],
+  assoc : 'a.'b.((?default : 'a?, 'b, ['b * 'a]) -> 'a)
+  .{
+    filter : 'c.'d.((('c, 'd) -> bool), ['c * 'd]) -> ['c * 'd],
+    filter_map : 'c.'d.'e.((('c, 'd) -> 'e?), ['c * 'd]) -> ['e],
+    mem : 'c.'d.('c, ['c * 'd]) -> bool,
+    nullable : 'c.'d.('c, ['c * 'd]) -> 'd?,
+    remove : 'c.'d.(('c, ['c * 'd]) -> ['c * 'd])
+    .{all : 'e.'f.('e, ['e * 'f]) -> ['e * 'f]
+    }
+  },
+  case : 'a.'b.(['a], 'b, (('a, ['a]) -> 'b)) -> 'b,
+  cons : 'a.('a, ['a]) -> ['a],
+  dcase : 'a.'b.(['a], (() -> 'b), (('a, ['a]) -> 'b)) -> 'b,
+  exists : 'a.((('a) -> bool), ['a]) -> bool,
+  filter : 'a.(?remove : (('a) -> unit), (('a) -> bool), ['a]) -> ['a],
+  filter_map : 'a.'b.((('a) -> 'b?), ['a]) -> ['b],
+  find : 'a.(?default : 'a?, (('a) -> bool), ['a]) -> 'a,
+  flatten : 'a.([['a]]) -> ['a],
+  fold : 'a.'b.(((('a, 'b) -> 'a), 'a, ['b]) -> 'a)
+  .{right : 'c.'d.((('c, 'd) -> 'd), 'd, ['c]) -> 'd
+  },
+  for_all : 'a.((('a) -> bool), ['a]) -> bool,
+  hd : 'a.(?default : 'a?, ['a]) -> 'a,
+  ind : 'a.'b.(['a], 'b, (('a, ['a], 'b) -> 'b)) -> 'b,
+  index : 'a.((('a) -> bool), ['a]) -> int,
+  indexed : 'a.(['a]) -> [int * 'a],
+  init : 'a.(int, ((int) -> 'a)) -> ['a],
+  insert : 'a.(int, 'a, ['a]) -> ['a],
+  is_empty : 'a.(['a]) -> bool,
+  iter : 'a.((('a) -> unit), ['a]) -> unit,
+  iterator : 'a.(['a?]) -> () -> 'a?,
+  iteri : 'a.(((int, 'a) -> unit), ['a]) -> unit,
+  last : 'a.(?default : 'a?, ['a]) -> 'a,
+  length : 'a.(['a]) -> int,
+  make : 'a.(int, 'a) -> ['a],
+  map : 'a.'b.(((('a) -> 'b), ['a]) -> ['b])
+  .{right : 'c.'d.((('c) -> 'd), ['c]) -> ['d]
+  },
+  mapi : 'a.'b.(((int, 'a) -> 'b), ['a]) -> ['b],
+  mem : 'a.('a, ['a]) -> bool,
+  mem_assoc : 'a.'b.('a, ['a * 'b]) -> bool,
+  nth : 'a.(?default : 'a?, ['a], int) -> 'a,
+  pick : 'a.(?default : 'a?, ['a]) -> 'a,
+  prefix : 'a.(int, ['a]) -> ['a],
+  remove : 'a.('a, ['a]) -> ['a],
+  rev : 'a.(['a]) -> ['a],
+  shuffle : 'a.(['a]) -> ['a],
+  slice : 'a.(?offset : int, ?length : int?, ['a]) -> ['a],
+  sort : 'a.(((('a, 'a) -> int), ['a]) -> ['a])
+  .{natural : 'b.(['b]) -> ['b]
+  },
+  tl : 'a.(['a]) -> ['a]
+} where 'a, 'b, 'c, 'e is an orderable type.
+warning 6 1:6-1:10: Top-level variable sine is overridden!
+warning 6 4:0-4:19: Top-level variable string is overridden!
+--- complete 2:3 ---
+sine (variable)
+(standard library)
+--- resolve 2:3 ---
+(undocumented)
+--- complete 5:11 ---
+add (method, documented) : ('a, ['a]) -> ['a]
+append (method, documented) : (['a], ['a]) -> ['a]
+assoc (method, documented) : ((?default : 'a?, 'b, ['b * 'a]) -> 'a)
+.{
+  filter : 'c.'d.((('c, 'd) -> bool), ['c * 'd]) -> ['c * 'd],
+  filter_map : 'c.'d.'e.((('c, 'd) -> 'e?), ['c * 'd]) -> ['e],
+  mem : 'c.'d.('c, ['c * 'd]) -> bool,
+  nullable : 'c.'d.('c, ['c * 'd]) -> 'd?,
+  remove : 'c.'d.(('c, ['c * 'd]) -> ['c * 'd])
+  .{all : 'e.'f.('e, ['e * 'f]) -> ['e * 'f]
+  }
+} where 'b, 'c, 'e is an orderable type
+case (method, documented) : (['a], 'b, (('a, ['a]) -> 'b)) -> 'b
+cons (method, documented) : ('a, ['a]) -> ['a]
+dcase (method, documented) : (['a], (() -> 'b), (('a, ['a]) -> 'b)) -> 'b
+exists (method, documented) : ((('a) -> bool), ['a]) -> bool
+filter (method, documented) : (?remove : (('a) -> unit), (('a) -> bool), ['a]) -> ['a]
+filter_map (method, documented) : ((('a) -> 'b?), ['a]) -> ['b]
+find (method, documented) : (?default : 'a?, (('a) -> bool), ['a]) -> 'a
+flatten (method, documented) : ([['a]]) -> ['a]
+fold (method, documented) : (((('a, 'b) -> 'a), 'a, ['b]) -> 'a)
+.{right : 'c.'d.((('c, 'd) -> 'd), 'd, ['c]) -> 'd}
+for_all (method, documented) : ((('a) -> bool), ['a]) -> bool
+hd (method, documented) : (?default : 'a?, ['a]) -> 'a
+ind (method, documented) : (['a], 'b, (('a, ['a], 'b) -> 'b)) -> 'b
+index (method, documented) : ((('a) -> bool), ['a]) -> int
+indexed (method, documented) : (['a]) -> [int * 'a]
+init (method, documented) : (int, ((int) -> 'a)) -> ['a]
+insert (method, documented) : (int, 'a, ['a]) -> ['a]
+is_empty (method, documented) : (['a]) -> bool
+iter (method, documented) : ((('a) -> unit), ['a]) -> unit
+iterator (method, documented) : (['a?]) -> () -> 'a?
+iteri (method, documented) : (((int, 'a) -> unit), ['a]) -> unit
+last (method, documented) : (?default : 'a?, ['a]) -> 'a
+length (method, documented) : (['a]) -> int
+make (method, documented) : (int, 'a) -> ['a]
+map (method, documented) : (((('a) -> 'b), ['a]) -> ['b]).{right : 'c.'d.((('c) -> 'd), ['c]) -> ['d]}
+mapi (method, documented) : (((int, 'a) -> 'b), ['a]) -> ['b]
+mem (method, documented) : ('a, ['a]) -> bool where 'a is an orderable type
+mem_assoc (method, documented) : ('a, ['a * 'b]) -> bool where 'a is an orderable type
+nth (method, documented) : (?default : 'a?, ['a], int) -> 'a
+pick (method, documented) : (?default : 'a?, ['a]) -> 'a
+prefix (method, documented) : (int, ['a]) -> ['a]
+remove (method, documented) : ('a, ['a]) -> ['a]
+rev (method, documented) : (['a]) -> ['a]
+shuffle (method, documented) : (['a]) -> ['a]
+slice (method, documented) : (?offset : int, ?length : int?, ['a]) -> ['a]
+sort (method, documented) : (((('a, 'a) -> int), ['a]) -> ['a]).{natural : 'b.(['b]) -> ['b]}
+where 'b is an orderable type
+tl (method, documented) : (['a]) -> ['a]
+--- resolve 5:11 ---
+```liquidsoap
+list.length : (['a]) -> int
+```
+
+Compute the length of a list, i.e., the number of its elements.
+
+Arguments:
+- `(unlabeled)` : `['a]`
+--- complete 6:11 ---
+only (field) : int

@@ -3,14 +3,16 @@ import { patchedOffset, placeholder } from "liquidsoap-patcher";
 import {
   CompletionItem,
   CompletionItemKind,
+  MarkupKind,
   Position,
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { type Analysis, type Method, scriptPath } from "./analysis";
+import { type Docs, formatDoc } from "./docs";
 import { byteColumn, lineText } from "./positions";
 
 const partialName = /[\p{L}_][\p{L}\p{N}_']*$/u;
-const nameBeforeDot = /(?:^|[^\p{L}\p{N}_'.])([\p{L}_][\p{L}\p{N}_']*)\.$/u;
+const dottedBeforeDot = /(?:^|[^\p{L}\p{N}_'.])([\p{L}_][\p{L}\p{N}_'.]*)\.$/u;
 
 // Returns where offset [at] of the edited text lands in the checked script, in
 // the analysis' units.
@@ -32,25 +34,58 @@ const checkEdited = (
   return { line: line + 1, column: byteColumn(lineText(patched, line), character) };
 };
 
-const methodItems = (methods: Method[]): CompletionItem[] =>
-  methods.map(({ name, type }) => ({
-    label: name,
-    kind: CompletionItemKind.Field,
-    detail: type,
-  }));
+// Types print their quantified variables first, as in `'a.(int) -> 'a`.
+const isFunctionType = (type: string): boolean =>
+  /^(?:'\w+\.)*\(/.test(type) && type.includes("->");
+
+/** Completions carry the name to document when the item is resolved. */
+export interface ItemData {
+  documented: string;
+}
+
+// The standard library's documentation only applies to names the script does
+// not bind itself.
+const item = (
+  docs: Docs,
+  label: string,
+  documented: string | undefined,
+  type: string | undefined,
+  kinds: { function: CompletionItemKind; value: CompletionItemKind },
+): CompletionItem => {
+  const doc = documented === undefined ? undefined : docs.get(documented);
+  const itemType = type ?? doc?.type;
+  return {
+    label,
+    kind: itemType && isFunctionType(itemType) ? kinds.function : kinds.value,
+    ...(type ? { detail: type } : {}),
+    ...(doc && documented ? { data: { documented } satisfies ItemData } : {}),
+  };
+};
+
+const methodItems = (
+  docs: Docs,
+  methods: Method[],
+  module: string | undefined,
+): CompletionItem[] =>
+  methods.map(({ name, type }) =>
+    item(docs, name, module && `${module}.${name}`, type, {
+      function: CompletionItemKind.Method,
+      value: CompletionItemKind.Field,
+    }),
+  );
 
 // The member being typed is removed so that the script still typechecks.
 const members = (
   analysis: Analysis,
   patch: Patcher,
+  docs: Docs,
   document: TextDocument,
   cursor: number,
   dot: number,
 ): CompletionItem[] => {
-  const before = document.getText().slice(0, dot + 1);
+  const object = dottedBeforeDot.exec(document.getText().slice(0, dot + 1))?.[1];
   // `null.m` names a module that no script can write.
-  if (nameBeforeDot.exec(before)?.[1] === "null")
-    return methodItems(analysis.nullMethods());
+  if (object === "null") return methodItems(docs, analysis.nullMethods(), "null");
   const at = checkEdited(
     analysis,
     patch,
@@ -58,7 +93,11 @@ const members = (
     { start: dot, end: cursor, text: "" },
     dot - 1,
   );
-  return at ? methodItems(analysis.methodsAt(at.line, at.column)) : [];
+  if (!at) return [];
+  const root = object?.split(".")[0];
+  const module =
+    root && !analysis.localsAt(at.line, at.column).includes(root) ? object : undefined;
+  return methodItems(docs, analysis.methodsAt(at.line, at.column), module);
 };
 
 // A name being typed is replaced with an expression that typechecks anywhere,
@@ -66,6 +105,7 @@ const members = (
 const names = (
   analysis: Analysis,
   patch: Patcher,
+  docs: Docs,
   document: TextDocument,
   cursor: number,
   start: number,
@@ -78,15 +118,22 @@ const names = (
     start,
   );
   if (!at) return [];
+  const locals = new Set(analysis.localsAt(at.line, at.column));
   return analysis
     .scopeAt(at.line, at.column)
     .filter((name) => `${name}()` !== placeholder)
-    .map((name) => ({ label: name, kind: CompletionItemKind.Variable }));
+    .map((name) =>
+      item(docs, name, locals.has(name) ? undefined : name, undefined, {
+        function: CompletionItemKind.Function,
+        value: CompletionItemKind.Variable,
+      }),
+    );
 };
 
 export const complete = (
   analysis: Analysis,
   patch: Patcher,
+  docs: Docs,
   document: TextDocument,
   position: Position,
 ): CompletionItem[] => {
@@ -94,6 +141,17 @@ export const complete = (
   const line = lineText(document, position.line).slice(0, position.character);
   const start = cursor - (partialName.exec(line)?.[0].length ?? 0);
   const text = document.getText();
-  if (text[start - 1] === ".") return members(analysis, patch, document, cursor, start - 1);
-  return names(analysis, patch, document, cursor, start);
+  if (text[start - 1] === ".")
+    return members(analysis, patch, docs, document, cursor, start - 1);
+  return names(analysis, patch, docs, document, cursor, start);
+};
+
+export const resolve = (docs: Docs, completion: CompletionItem): CompletionItem => {
+  const documented = (completion.data as ItemData | undefined)?.documented;
+  const doc = documented && docs.get(documented);
+  if (!documented || !doc) return completion;
+  return {
+    ...completion,
+    documentation: { kind: MarkupKind.Markdown, value: formatDoc(documented, doc) },
+  };
 };

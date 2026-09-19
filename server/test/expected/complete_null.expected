@@ -2,10 +2,10 @@
 error syntax 1:8-1:9: Syntax error.
 warning 4 1:0-1:8: Unused variable d
 --- complete 1:9 ---
-case : ('a?, (() -> 'b), (('a) -> 'b)) -> 'b
-default : ('a?, (() -> 'a)) -> 'a
-defined : ('a?) -> bool
-find : (?default : 'a??, (('b) -> 'a?), ['b]) -> 'a?
-get : (?default : 'a?, 'a?) -> 'a
-map : ((('a) -> 'b?), 'a?) -> 'b?
-to_list : ('a?) -> ['a]
+case (method, documented) : ('a?, (() -> 'b), (('a) -> 'b)) -> 'b
+default (method, documented) : ('a?, (() -> 'a)) -> 'a
+defined (method, documented) : ('a?) -> bool
+find (method, documented) : (?default : 'a??, (('b) -> 'a?), ['b]) -> 'a?
+get (method, documented) : (?default : 'a?, 'a?) -> 'a
+map (method, documented) : ((('a) -> 'b?), 'a?) -> 'b?
+to_list (method, documented) : ('a?) -> ['a]

@@ -1,5 +1,5 @@
 --- diagnostics ---
 error syntax 7:0-7:0: Syntax error: missing an expression.
 --- complete 4:4 ---
-f
+f (variable)
 (standard library)
