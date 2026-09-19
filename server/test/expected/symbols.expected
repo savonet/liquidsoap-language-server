@@ -1,0 +1,14 @@
+--- diagnostics ---
+warning 4 2:0-8:3: Unused variable b
+warning 4 12:4-12:10: Unused variable d
+warning 4 12:4-12:10: Unused variable c
+warning 4 1:0-1:20: Unused variable greeting
+--- symbols ---
+greeting value 1:0-1:20 name 1:0-1:8
+f function 2:0-8:3 name 2:4-2:5
+  y value 3:2-3:7 name 3:2-3:3
+  inner function 4:2-6:5 name 4:6-4:11
+g function 9:0-9:20 name 9:4-9:5
+s value 10:0-10:10 name 10:0-10:1
+s.label value 11:0-11:17 name 11:0-11:7
+{c, d} value 12:0-12:27 name 12:4-12:10

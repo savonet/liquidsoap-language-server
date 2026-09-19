@@ -1,5 +1,8 @@
 import * as path from "node:path";
 import { Language, Node, Parser } from "web-tree-sitter";
+import { type Definition, definitions } from "./outline";
+
+export type { Definition } from "./outline";
 
 /** A replacement in the original source; offsets are JavaScript string indices. */
 export interface Edit {
@@ -267,13 +270,20 @@ export const patchedOffset = (
 
 export type Patcher = (source: string) => Patched;
 
-export const createPatcher = async (
-  grammar = path.join(__dirname, "..", "grammar", "tree-sitter-liquidsoap.wasm"),
-): Promise<Patcher> => {
+type WithTree = <T>(source: string, fn: (root: Node) => T) => T;
+
+const defaultGrammar = path.join(
+  __dirname,
+  "..",
+  "grammar",
+  "tree-sitter-liquidsoap.wasm",
+);
+
+const loadParser = async (grammar: string): Promise<WithTree> => {
   await Parser.init();
   const parser = new Parser();
   parser.setLanguage(await Language.load(grammar));
-  const withTree = <T>(source: string, fn: (root: Node) => T): T => {
+  return (source, fn) => {
     const tree = parser.parse(source);
     if (!tree) throw new Error("tree-sitter returned no tree.");
     try {
@@ -282,6 +292,17 @@ export const createPatcher = async (
       tree.delete();
     }
   };
+};
+
+export type Outline = (source: string) => Definition[];
+
+export const createOutline = async (grammar = defaultGrammar): Promise<Outline> => {
+  const withTree = await loadParser(grammar);
+  return (source) => withTree(source, definitions);
+};
+
+export const createPatcher = async (grammar = defaultGrammar): Promise<Patcher> => {
+  const withTree = await loadParser(grammar);
 
   const patchWhole = (root: Node, source: string) => {
     const edits: Edit[] = [];

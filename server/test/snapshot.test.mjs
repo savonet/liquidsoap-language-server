@@ -1,5 +1,5 @@
 // Each script in cases/ is opened in the server, and its diagnostics and the
-// answers to its `#? hover|complete L:C` queries are checked against
+// answers to its `#? hover|complete L:C` and `#? symbols` queries are checked against
 // expected/. Lines start at 1 and characters are UTF-16 code units from 0, as
 // the editor counts them. Run with UPDATE=1 to rewrite them, then review the
 // diff.
@@ -29,11 +29,13 @@ before(async () => {
 after(() => server.stop());
 
 const queries = (source) =>
-  [...source.matchAll(/^#\? (\w+) (\d+):(\d+)$/gm)].map(([, query, line, character]) => ({
-    query,
-    line: Number(line),
-    character: Number(character),
-  }));
+  [...source.matchAll(/^#\? (\w+)(?: (\d+):(\d+))?$/gm)].map(
+    ([, query, line, character]) => ({
+      query,
+      line: line && Number(line),
+      character: character && Number(character),
+    }),
+  );
 
 const position = ({ line, character }) => `${line + 1}:${character}`;
 
@@ -61,7 +63,14 @@ const printCompletions = (items) => {
   return lines.join("\n");
 };
 
+const printSymbols = (symbols, indent = "") =>
+  symbols.flatMap(({ name, kind, range, selectionRange, children = [] }) => [
+    `${indent}${name} ${kind === 12 ? "function" : "value"} ${printRange(range)} name ${printRange(selectionRange)}`,
+    ...printSymbols(children, `${indent}  `),
+  ]);
+
 const answer = async (file, { query, line, character }) => {
+  if (query === "symbols") return printSymbols(await server.symbols(file)).join("\n");
   if (query === "hover")
     return (await server.hover(file, line - 1, character))?.contents.value ?? "(none)";
   if (query === "complete")
@@ -91,7 +100,7 @@ for (const name of cases) {
     ];
     for (const query of queries(source))
       sections.push(
-        `--- ${query.query} ${query.line}:${query.character} ---`,
+        `--- ${query.query}${query.line ? ` ${query.line}:${query.character}` : ""} ---`,
         await answer(file, query),
       );
     const actual = `${sections.join("\n")}\n`;
