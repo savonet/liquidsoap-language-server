@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # stdlib.types must come from the same liquidsoap commit as the libraries the
+  # analysis module is built against.
+  LIQUIDSOAP_REF: a4ff2e6c4fad58e455798c8a61cb521bcf8d54f7
+  OPAM_REPOSITORY_REF: 8cdfa3296d9bc7d93273f46eb2438757e4fd5cf0
+  TREE_SITTER_LIQUIDSOAP_REF: a094345ace46277b23dbcb81a5d8cd972df32183
+  BINARYEN_VERSION: "126"
+  TREE_SITTER_CLI_VERSION: 0.26.11
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: savonet/liquidsoap
+          ref: ${{ env.LIQUIDSOAP_REF }}
+          path: _deps/liquidsoap
+
+      - uses: actions/checkout@v4
+        with:
+          repository: savonet/tree-sitter-liquidsoap
+          ref: ${{ env.TREE_SITTER_LIQUIDSOAP_REF }}
+          path: _deps/tree-sitter-liquidsoap
+
+      - name: Install binaryen and the tree-sitter CLI
+        run: |
+          curl -fsSL "https://github.com/WebAssembly/binaryen/releases/download/version_${BINARYEN_VERSION}/binaryen-version_${BINARYEN_VERSION}-x86_64-linux.tar.gz" | tar xz -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/binaryen-version_${BINARYEN_VERSION}/bin" >> "$GITHUB_PATH"
+          npm install -g "tree-sitter-cli@${TREE_SITTER_CLI_VERSION}"
+
+      - uses: ocaml/setup-ocaml@v3
+        with:
+          ocaml-compiler: "5.5"
+          opam-repositories: |
+            default: git+https://github.com/ocaml/opam-repository.git#${{ env.OPAM_REPOSITORY_REF }}
+
+      # The synced modules are liquidsoap's own copies, so they are pinned. Only
+      # the required dependencies are installed, and binaryen comes from its
+      # release since apt's is too old.
+      - name: Install OCaml dependencies
+        run: |
+          for module in _deps/liquidsoap/src/modules/synced/*/; do
+            opam pin add -yn "$module"
+          done
+          opam install -y --deps-only ./_deps/liquidsoap/opam/liquidsoap.opam ./_deps/liquidsoap/opam/liquidsoap-lang.opam ./_deps/liquidsoap/opam/liquidsoap-js.opam
+          opam install -y --assume-depexts wasm_of_ocaml-compiler
+
+      - name: Build liquidsoap
+        working-directory: _deps/liquidsoap
+        run: |
+          opam exec -- dune build @install src/js/stdlib.types
+          _build/default/src/bin/liquidsoap.exe --stdlib ./src/libs/stdlib.liq --list-functions-json > functions.json
+
+      - name: Build the analysis module
+        working-directory: analysis
+        run: opam exec -- dune build --profile release ./analysis_wasm.bc.wasm.js
+        env:
+          OCAMLPATH: ${{ github.workspace }}/_deps/liquidsoap/_build/install/default/lib
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - uses: pnpm/action-setup@v4
+
+      - run: pnpm install --frozen-lockfile
+
+      - run: pnpm --filter liquidsoap-patcher run build:grammar
+        env:
+          TREE_SITTER_LIQUIDSOAP: ${{ github.workspace }}/_deps/tree-sitter-liquidsoap
+
+      - run: pnpm run build
+        env:
+          LIQUIDSOAP_STDLIB_TYPES: ${{ github.workspace }}/_deps/liquidsoap/_build/default/src/js/stdlib.types
+          LIQUIDSOAP_FUNCTIONS_JSON: ${{ github.workspace }}/_deps/liquidsoap/functions.json
+
+      - run: pnpm test

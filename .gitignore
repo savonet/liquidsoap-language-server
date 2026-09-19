@@ -3,3 +3,4 @@ node_modules/
 dist/
 *.install
 patcher/grammar/*.wasm
+_deps/
