@@ -1,8 +1,6 @@
 import type { Patcher } from "liquidsoap-patcher";
 import { isPatched, originalOffset } from "liquidsoap-patcher";
-import * as fs from "node:fs";
 import * as path from "node:path";
-import { pathToFileURL } from "node:url";
 import {
   Diagnostic,
   DiagnosticSeverity,
@@ -10,7 +8,7 @@ import {
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { type Analysis, type RawDiagnostic, scriptPath } from "./analysis";
-import { lineText, toRange } from "./positions";
+import { fileDocument, lineText, spanRange } from "./positions";
 
 // Error codes of Liquidsoap's lexing and parse errors, which warnings reuse:
 // tree-sitter reports syntax errors itself once the script needed patching.
@@ -18,13 +16,6 @@ const parseErrorCodes = new Set([1, 2, 3]);
 
 const severity = (raw: RawDiagnostic): DiagnosticSeverity =>
   raw.severity === "error" ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning;
-
-const rawRange = (document: TextDocument, raw: RawDiagnostic): Range =>
-  toRange(
-    document,
-    { line: raw.startLine, column: raw.startColumn },
-    { line: raw.endLine, column: raw.endColumn },
-  );
 
 // Positions in messages name their file: the document's own go without it, and
 // others are relative to the document's directory.
@@ -55,16 +46,7 @@ const includeOf = (document: TextDocument, file: string): Range => {
 
 // Shown on the `%include`, with a link to where the included file is wrong.
 const included = (document: TextDocument, raw: RawDiagnostic): Diagnostic => {
-  let text = "";
-  try {
-    text = fs.readFileSync(raw.file, "utf8");
-  } catch {}
-  const includedDocument = TextDocument.create(
-    pathToFileURL(raw.file).href,
-    "liquidsoap",
-    0,
-    text,
-  );
+  const includedDocument = fileDocument(raw.file);
   return {
     severity: severity(raw),
     code: raw.code,
@@ -75,7 +57,7 @@ const included = (document: TextDocument, raw: RawDiagnostic): Diagnostic => {
       {
         location: {
           uri: includedDocument.uri,
-          range: rawRange(includedDocument, raw),
+          range: spanRange(includedDocument, raw),
         },
         message: localMessage(document, raw.message),
       },
@@ -104,7 +86,7 @@ const semantic = (
     .filter((raw) => !isOwn(raw) && raw.severity === "error")
     .map((raw) => included(document, raw));
   const own = raws.filter(isOwn).flatMap((raw) => {
-    const range = rawRange(patched, raw);
+    const range = spanRange(patched, raw);
     const start = patched.offsetAt(range.start);
     const end = patched.offsetAt(range.end);
     if (isPatched(edits, start)) return [];

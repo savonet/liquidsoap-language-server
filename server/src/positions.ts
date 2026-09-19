@@ -1,5 +1,8 @@
+import * as fs from "node:fs";
+import { pathToFileURL } from "node:url";
 import type { Position, Range } from "vscode-languageserver";
-import type { TextDocument } from "vscode-languageserver-textdocument";
+import { TextDocument } from "vscode-languageserver-textdocument";
+import type { Span } from "./analysis";
 
 export const lineText = (document: TextDocument, line: number): string =>
   document
@@ -49,3 +52,19 @@ export const toRange = (
   start: toPosition(document, start.line, start.column),
   end: toPosition(document, end.line, end.column),
 });
+
+export const spanRange = (document: TextDocument, span: Span): Range =>
+  toRange(
+    document,
+    { line: span.startLine, column: span.startColumn },
+    { line: span.endLine, column: span.endColumn },
+  );
+
+/** A file that is not open, read from disk to convert its columns. */
+export const fileDocument = (file: string): TextDocument => {
+  let text = "";
+  try {
+    text = fs.readFileSync(file, "utf8");
+  } catch {}
+  return TextDocument.create(pathToFileURL(file).href, "liquidsoap", 0, text);
+};

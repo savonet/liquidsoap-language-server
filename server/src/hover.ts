@@ -1,10 +1,10 @@
 import type { Patcher } from "liquidsoap-patcher";
-import { patchedOffset } from "liquidsoap-patcher";
 import { Hover, MarkupKind, Position } from "vscode-languageserver/node";
-import { TextDocument } from "vscode-languageserver-textdocument";
-import { type Analysis, scriptPath } from "./analysis";
+import type { TextDocument } from "vscode-languageserver-textdocument";
+import type { Analysis } from "./analysis";
+import { checkAt } from "./checked";
 import { type Docs, dottedNameAt, formatDoc } from "./docs";
-import { byteColumn, lineText } from "./positions";
+import { lineText } from "./positions";
 
 const identifierChar = /[\p{L}\p{N}_'.]/u;
 
@@ -28,19 +28,9 @@ export const hover = (
   position: Position,
 ): Hover | null => {
   if (!onIdentifier(document, position)) return null;
-  const { source, edits } = patch(document.getText());
-  const offset = patchedOffset(edits, document.offsetAt(position));
-  if (offset === undefined) return null;
-  const patched = TextDocument.create(
-    document.uri,
-    document.languageId,
-    document.version,
-    source,
-  );
-  const { line, character } = patched.positionAt(offset);
-  const at = { line: line + 1, column: byteColumn(lineText(patched, line), character) };
-  // The analysis module answers for the script it checked last.
-  analysis.check(source, scriptPath(document.uri));
+  const checked = checkAt(analysis, patch, document, document.offsetAt(position));
+  if (!checked) return null;
+  const { at } = checked;
   // The standard library's documentation only applies when the script does not
   // bind the name itself around the cursor.
   const name = dottedNameAt(document, position);

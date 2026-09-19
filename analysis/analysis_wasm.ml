@@ -79,6 +79,26 @@ let methods_at line column =
     | None -> Js.array [||]
     | Some result -> methods_to_js (Analysis.methods_at result ~line ~column)
 
+let definition_at line column =
+  match !last_result with
+    | None -> Js.null
+    | Some result -> (
+        match Analysis.definition_at result ~line ~column with
+          | None -> Js.null
+          | Some pos ->
+              let { Liquidsoap_lang_prelude.Pos.fname; lstart; cstart; lstop; cstop }
+                  =
+                Liquidsoap_lang_prelude.Pos.unpack pos
+              in
+              Js.some
+                (object%js
+                   val file = Js.string fname
+                   val startLine = lstart
+                   val startColumn = cstart
+                   val endLine = lstop
+                   val endColumn = cstop
+                end))
+
 let null_methods () =
   match !env with
     | None -> Js.array [||]
@@ -93,5 +113,6 @@ let () =
        method localsAt line column = locals_at line column
        method scopeAt line column = scope_at line column
        method methodsAt line column = methods_at line column
+       method definitionAt line column = definition_at line column
        method nullMethods = null_methods ()
     end)

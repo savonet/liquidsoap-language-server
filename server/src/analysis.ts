@@ -2,14 +2,18 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 
-export interface RawDiagnostic {
-  severity: "error" | "warning";
-  code: number;
+/** A span in a file, with Liquidsoap's 1-based lines and byte columns. */
+export interface Span {
   file: string;
   startLine: number;
   startColumn: number;
   endLine: number;
   endColumn: number;
+}
+
+export interface RawDiagnostic extends Span {
+  severity: "error" | "warning";
+  code: number;
   message: string;
 }
 
@@ -25,6 +29,7 @@ export interface Analysis {
   localsAt(line: number, column: number): string[];
   scopeAt(line: number, column: number): string[];
   methodsAt(line: number, column: number): Method[];
+  definitionAt(line: number, column: number): Span | null;
   nullMethods(): Method[];
 }
 
@@ -65,6 +70,7 @@ export const rememberLastCheck = (analysis: Analysis): Analysis => {
     localsAt: (line, column) => analysis.localsAt(line, column),
     scopeAt: (line, column) => analysis.scopeAt(line, column),
     methodsAt: (line, column) => analysis.methodsAt(line, column),
+    definitionAt: (line, column) => analysis.definitionAt(line, column),
     nullMethods: () => analysis.nullMethods(),
   };
 };

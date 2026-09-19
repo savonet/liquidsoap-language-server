@@ -1,0 +1,17 @@
+--- diagnostics ---
+error syntax 18:0-18:0: Syntax error: missing `)`.
+error 15 9:9-18:0: Missing arguments in function application: int.
+--- definition 4:6 ---
+definition.liq 3:6-3:7
+--- definition 5:2 ---
+definition.liq 4:2-4:11
+--- definition 7:4 ---
+definition.liq 2:0-2:5
+--- definition 7:8 ---
+definition.liq 3:0-6:3
+--- definition 8:8 ---
+included_ok.liq-inc 1:0-1:18
+--- definition 8:18 ---
+definition.liq 7:0-7:12
+--- definition 7:0 ---
+(none)

@@ -9,6 +9,7 @@ import {
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { loadAnalysis } from "./analysis";
 import { complete } from "./completion";
+import { definition } from "./definition";
 import { diagnose } from "./diagnostics";
 import { loadDocs } from "./docs";
 import { hover } from "./hover";
@@ -26,6 +27,7 @@ connection.onInitialize(() => ({
     textDocumentSync: TextDocumentSyncKind.Incremental,
     hoverProvider: true,
     documentSymbolProvider: true,
+    definitionProvider: true,
     completionProvider: { triggerCharacters: ["."] },
   },
 }));
@@ -59,6 +61,12 @@ connection.onCompletion(async ({ textDocument, position }) => {
   const document = documents.get(textDocument.uri);
   if (!document) return [];
   return complete(await analysis, await patcher, document, position);
+});
+
+connection.onDefinition(async ({ textDocument, position }) => {
+  const document = documents.get(textDocument.uri);
+  if (!document) return null;
+  return definition(await analysis, await patcher, document, position);
 });
 
 connection.onDocumentSymbol(async ({ textDocument }) => {
