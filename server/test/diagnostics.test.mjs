@@ -1,73 +1,14 @@
-// Talks to the built server over stdio, as an editor would.
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
-import path from "node:path";
-import { test, before, after } from "node:test";
-import { fileURLToPath } from "node:url";
-import {
-  createMessageConnection,
-  StreamMessageReader,
-  StreamMessageWriter,
-} from "vscode-jsonrpc/node";
+import { after, before, test } from "node:test";
+import { startServer } from "./client.mjs";
 
-const server = path.join(
-  path.dirname(fileURLToPath(import.meta.url)),
-  "..",
-  "dist",
-  "server.js",
-);
-
-let child;
-let connection;
-const published = new Map();
-const waiters = new Map();
-
-const diagnosticsFor = (uri) =>
-  new Promise((resolve) => {
-    if (published.has(uri)) return resolve(published.get(uri));
-    waiters.set(uri, resolve);
-  });
-
-let version = 0;
-const open = async (name, text) => {
-  const uri = `file:///${name}`;
-  published.delete(uri);
-  const diagnostics = diagnosticsFor(uri);
-  await connection.sendNotification("textDocument/didOpen", {
-    textDocument: { uri, languageId: "liquidsoap", version: ++version, text },
-  });
-  return diagnostics;
-};
-
+let server;
 before(async () => {
-  child = spawn(process.execPath, [server, "--stdio"], {
-    stdio: ["pipe", "pipe", "inherit"],
-  });
-  connection = createMessageConnection(
-    new StreamMessageReader(child.stdout),
-    new StreamMessageWriter(child.stdin),
-  );
-  connection.onNotification(
-    "textDocument/publishDiagnostics",
-    ({ uri, diagnostics }) => {
-      published.set(uri, diagnostics);
-      waiters.get(uri)?.(diagnostics);
-      waiters.delete(uri);
-    },
-  );
-  connection.listen();
-  await connection.sendRequest("initialize", {
-    processId: process.pid,
-    rootUri: null,
-    capabilities: {},
-  });
-  await connection.sendNotification("initialized", {});
+  server = await startServer();
 });
+after(() => server.stop());
 
-after(() => {
-  connection.dispose();
-  child.kill();
-});
+const open = (name, text) => server.open(name, text);
 
 test("a type error gives one diagnostic at the right range", async () => {
   const diagnostics = await open("type_error.liq", 'x = 1 + "a"\n');

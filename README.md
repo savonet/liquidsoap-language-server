@@ -4,7 +4,7 @@ A [Language Server Protocol](https://microsoft.github.io/language-server-protoco
 
 The server runs Liquidsoap's own parser and typechecker, compiled to WebAssembly. It typechecks scripts against the full standard library without a native Liquidsoap binary.
 
-This is early work: the server reports diagnostics (syntax and type errors, warnings), including for scripts that do not parse. Hover and completion come next.
+This is early work. The server reports diagnostics (syntax and type errors, warnings) and shows the type of the expression under the cursor on hover, including in scripts that do not parse. Completion comes next.
 
 A script being edited usually does not parse. The patcher uses tree-sitter to find the broken parts and replaces them with `💣()`, a Liquidsoap expression that fits any type, so the typechecker sees the rest of the script as usual. Syntax errors are reported where tree-sitter finds them.
 

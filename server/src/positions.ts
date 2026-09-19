@@ -1,7 +1,7 @@
 import type { Position, Range } from "vscode-languageserver";
 import type { TextDocument } from "vscode-languageserver-textdocument";
 
-const lineText = (document: TextDocument, line: number): string =>
+export const lineText = (document: TextDocument, line: number): string =>
   document
     .getText({
       start: { line, character: 0 },
@@ -24,6 +24,9 @@ export const utf16Column = (text: string, byteColumn: number): number => {
   }
   return units;
 };
+
+export const byteColumn = (text: string, utf16Column: number): number =>
+  Buffer.byteLength(text.slice(0, utf16Column), "utf8");
 
 // Liquidsoap lines start at 1, the protocol's at 0.
 const toPosition = (
