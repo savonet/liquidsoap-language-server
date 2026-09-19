@@ -1,5 +1,6 @@
 import * as fs from "node:fs";
 import * as path from "node:path";
+import { fileURLToPath } from "node:url";
 
 export interface RawDiagnostic {
   severity: "error" | "warning";
@@ -18,7 +19,8 @@ export interface Method {
 }
 
 export interface Analysis {
-  check(source: string): RawDiagnostic[];
+  /** [file] is the script's path, or empty for a document with none. */
+  check(source: string, file: string): RawDiagnostic[];
   typeAt(line: number, column: number): string | null;
   localsAt(line: number, column: number): string[];
   scopeAt(line: number, column: number): string[];
@@ -43,6 +45,9 @@ const waitForExport = async (
   }
   throw new Error("The analysis module did not initialize.");
 };
+
+export const scriptPath = (uri: string): string =>
+  uri.startsWith("file:") ? fileURLToPath(uri) : "";
 
 export const loadAnalysis = async (dir: string): Promise<Analysis> => {
   const exported = require(path.join(dir, "analysis_wasm.bc.wasm.js"));

@@ -1,7 +1,7 @@
 // Starts the built server and talks to it over stdio, as an editor would.
 import { spawn } from "node:child_process";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   createMessageConnection,
   StreamMessageReader,
@@ -29,10 +29,16 @@ export const startServer = async () => {
     "textDocument/publishDiagnostics",
     ({ uri, diagnostics }) => {
       published.set(uri, diagnostics);
-      waiters.get(uri)?.(diagnostics);
+      waiters.get(uri)?.resolve(diagnostics);
       waiters.delete(uri);
     },
   );
+  // Without this, a server that dies leaves every pending request hanging.
+  child.on("exit", (code) => {
+    for (const { reject } of waiters.values())
+      reject(new Error(`The server exited with code ${code}.`));
+    waiters.clear();
+  });
   connection.listen();
   await connection.sendRequest("initialize", {
     processId: process.pid,
@@ -44,23 +50,26 @@ export const startServer = async () => {
   let version = 0;
   return {
     // Resolves with the diagnostics published for the opened document.
-    open: async (name, text) => {
-      const uri = `file:///${name}`;
+    // Documents are named by their path, which `%include` resolves against.
+    open: async (file, text) => {
+      const uri = pathToFileURL(file).href;
       published.delete(uri);
-      const diagnostics = new Promise((resolve) => waiters.set(uri, resolve));
+      const diagnostics = new Promise((resolve, reject) =>
+        waiters.set(uri, { resolve, reject }),
+      );
       await connection.sendNotification("textDocument/didOpen", {
         textDocument: { uri, languageId: "liquidsoap", version: ++version, text },
       });
       return diagnostics;
     },
-    hover: (name, line, character) =>
+    hover: (file, line, character) =>
       connection.sendRequest("textDocument/hover", {
-        textDocument: { uri: `file:///${name}` },
+        textDocument: { uri: pathToFileURL(file).href },
         position: { line, character },
       }),
-    complete: (name, line, character) =>
+    complete: (file, line, character) =>
       connection.sendRequest("textDocument/completion", {
-        textDocument: { uri: `file:///${name}` },
+        textDocument: { uri: pathToFileURL(file).href },
         position: { line, character },
       }),
     stop: () => {

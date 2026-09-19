@@ -1,55 +1,128 @@
 import type { Patcher } from "liquidsoap-patcher";
 import { isPatched, originalOffset } from "liquidsoap-patcher";
-import { Diagnostic, DiagnosticSeverity } from "vscode-languageserver/node";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { pathToFileURL } from "node:url";
+import {
+  Diagnostic,
+  DiagnosticSeverity,
+  Range,
+} from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import type { Analysis, RawDiagnostic } from "./analysis";
-import { toRange } from "./positions";
+import { type Analysis, type RawDiagnostic, scriptPath } from "./analysis";
+import { lineText, toRange } from "./positions";
 
 // Error codes of Liquidsoap's lexing and parse errors, which warnings reuse:
 // tree-sitter reports syntax errors itself once the script needed patching.
 const parseErrorCodes = new Set([1, 2, 3]);
+
+const severity = (raw: RawDiagnostic): DiagnosticSeverity =>
+  raw.severity === "error" ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning;
+
+const rawRange = (document: TextDocument, raw: RawDiagnostic): Range =>
+  toRange(
+    document,
+    { line: raw.startLine, column: raw.startColumn },
+    { line: raw.endLine, column: raw.endColumn },
+  );
+
+// Positions in messages name their file: the document's own go without it, and
+// others are relative to the document's directory.
+const localMessage = (document: TextDocument, message: string): string => {
+  const file = scriptPath(document.uri);
+  if (!file) return message;
+  return message
+    .replaceAll(`${file}, `, "")
+    .replaceAll(`${path.dirname(file)}${path.sep}`, "");
+};
+
+const includeDirective = /^\s*%include(?:_extra)?\s+"([^"]+)"/;
+
+// The name in the document's `%include` of [file]. A file included from an
+// included file has none, and its errors go at the top of the document.
+const includeOf = (document: TextDocument, file: string): Range => {
+  const directory = path.dirname(scriptPath(document.uri));
+  for (let line = 0; line < document.lineCount; line++) {
+    const match = includeDirective.exec(lineText(document, line));
+    if (match && path.resolve(directory, match[1]) === path.resolve(file))
+      return {
+        start: { line, character: match[0].length - match[1].length - 1 },
+        end: { line, character: match[0].length },
+      };
+  }
+  return { start: { line: 0, character: 0 }, end: { line: 0, character: 0 } };
+};
+
+// Shown on the `%include`, with a link to where the included file is wrong.
+const included = (document: TextDocument, raw: RawDiagnostic): Diagnostic => {
+  let text = "";
+  try {
+    text = fs.readFileSync(raw.file, "utf8");
+  } catch {}
+  const includedDocument = TextDocument.create(
+    pathToFileURL(raw.file).href,
+    "liquidsoap",
+    0,
+    text,
+  );
+  return {
+    severity: severity(raw),
+    code: raw.code,
+    source: "liquidsoap",
+    message: `In ${path.basename(raw.file)}: ${localMessage(document, raw.message)}`,
+    range: includeOf(document, raw.file),
+    relatedInformation: [
+      {
+        location: {
+          uri: includedDocument.uri,
+          range: rawRange(includedDocument, raw),
+        },
+        message: localMessage(document, raw.message),
+      },
+    ],
+  };
+};
 
 const semantic = (
   analysis: Analysis,
   document: TextDocument,
   patched: TextDocument,
   edits: Parameters<typeof originalOffset>[0],
-): Diagnostic[] =>
-  analysis
-    .check(patched.getText())
-    // Diagnostics positioned in `%include`d files belong to other documents.
-    .filter(({ file }) => file === "")
+): Diagnostic[] => {
+  const file = scriptPath(document.uri);
+  const raws = analysis
+    .check(patched.getText(), file)
     .filter(
       ({ severity, code }) =>
         edits.length === 0 ||
         severity !== "error" ||
         !parseErrorCodes.has(code),
-    )
-    .flatMap((raw: RawDiagnostic) => {
-      const range = toRange(
-        patched,
-        { line: raw.startLine, column: raw.startColumn },
-        { line: raw.endLine, column: raw.endColumn },
-      );
-      const start = patched.offsetAt(range.start);
-      const end = patched.offsetAt(range.end);
-      if (isPatched(edits, start)) return [];
-      return [
-        {
-          severity:
-            raw.severity === "error"
-              ? DiagnosticSeverity.Error
-              : DiagnosticSeverity.Warning,
-          code: raw.code,
-          source: "liquidsoap",
-          message: raw.message,
-          range: {
-            start: document.positionAt(originalOffset(edits, start)),
-            end: document.positionAt(originalOffset(edits, end)),
-          },
+    );
+  const isOwn = (raw: RawDiagnostic) => raw.file === file || raw.file === "";
+  // An included library's unused definitions are not this script's concern.
+  const fromIncludes = raws
+    .filter((raw) => !isOwn(raw) && raw.severity === "error")
+    .map((raw) => included(document, raw));
+  const own = raws.filter(isOwn).flatMap((raw) => {
+    const range = rawRange(patched, raw);
+    const start = patched.offsetAt(range.start);
+    const end = patched.offsetAt(range.end);
+    if (isPatched(edits, start)) return [];
+    return [
+      {
+        severity: severity(raw),
+        code: raw.code,
+        source: "liquidsoap",
+        message: localMessage(document, raw.message),
+        range: {
+          start: document.positionAt(originalOffset(edits, start)),
+          end: document.positionAt(originalOffset(edits, end)),
         },
-      ];
-    });
+      },
+    ];
+  });
+  return [...own, ...fromIncludes];
+};
 
 export const diagnose = (
   analysis: Analysis,

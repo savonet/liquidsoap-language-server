@@ -21,8 +21,9 @@ let server;
 let standardNames;
 before(async () => {
   server = await startServer();
-  await server.open("empty.liq", "");
-  const items = await server.complete("empty.liq", 0, 0);
+  const empty = path.join(casesDir, "empty.liq");
+  await server.open(empty, "");
+  const items = await server.complete(empty, 0, 0);
   standardNames = new Set(items.map(({ label }) => label));
 });
 after(() => server.stop());
@@ -36,8 +37,16 @@ const queries = (source) =>
 
 const position = ({ line, character }) => `${line + 1}:${character}`;
 
-const printDiagnostic = ({ severity, code, range, message }) =>
-  `${severity === 1 ? "error" : "warning"} ${code ?? "syntax"} ${position(range.start)}-${position(range.end)}: ${message}`;
+const printRange = ({ start, end }) => `${position(start)}-${position(end)}`;
+
+const printRelated = ({ location, message }) =>
+  `  at ${path.relative(casesDir, fileURLToPath(location.uri))} ${printRange(location.range)}: ${message}`;
+
+const printDiagnostic = ({ severity, code, range, message, relatedInformation = [] }) =>
+  [
+    `${severity === 1 ? "error" : "warning"} ${code ?? "syntax"} ${printRange(range)}: ${message}`,
+    ...relatedInformation.map(printRelated),
+  ].join("\n");
 
 const variableKind = 6;
 
@@ -52,11 +61,11 @@ const printCompletions = (items) => {
   return lines.join("\n");
 };
 
-const answer = async (name, { query, line, character }) => {
+const answer = async (file, { query, line, character }) => {
   if (query === "hover")
-    return (await server.hover(name, line - 1, character))?.contents.value ?? "(none)";
+    return (await server.hover(file, line - 1, character))?.contents.value ?? "(none)";
   if (query === "complete")
-    return printCompletions(await server.complete(name, line - 1, character));
+    return printCompletions(await server.complete(file, line - 1, character));
   throw new Error(`Unknown query: ${query}`);
 };
 
@@ -74,15 +83,16 @@ test("the standard library offers only names a script can write", () => {
 
 for (const name of cases) {
   test(name, async () => {
-    const source = fs.readFileSync(path.join(casesDir, name), "utf8");
+    const file = path.join(casesDir, name);
+    const source = fs.readFileSync(file, "utf8");
     const sections = [
       "--- diagnostics ---",
-      ...(await server.open(name, source)).map(printDiagnostic),
+      ...(await server.open(file, source)).map(printDiagnostic),
     ];
     for (const query of queries(source))
       sections.push(
         `--- ${query.query} ${query.line}:${query.character} ---`,
-        await answer(name, query),
+        await answer(file, query),
       );
     const actual = `${sections.join("\n")}\n`;
     const expectedFile = path.join(expectedDir, name.replace(/\.liq$/, ".expected"));

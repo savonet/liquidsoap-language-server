@@ -2,7 +2,7 @@ import type { Patcher } from "liquidsoap-patcher";
 import { patchedOffset } from "liquidsoap-patcher";
 import { Hover, MarkupKind, Position } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import type { Analysis } from "./analysis";
+import { type Analysis, scriptPath } from "./analysis";
 import { type Docs, dottedNameAt, formatDoc } from "./docs";
 import { byteColumn, lineText } from "./positions";
 
@@ -40,7 +40,7 @@ export const hover = (
   const { line, character } = patched.positionAt(offset);
   const at = { line: line + 1, column: byteColumn(lineText(patched, line), character) };
   // The analysis module answers for the script it checked last.
-  analysis.check(source);
+  analysis.check(source, scriptPath(document.uri));
   // The standard library's documentation only applies when the script does not
   // bind the name itself around the cursor.
   const name = dottedNameAt(document, position);

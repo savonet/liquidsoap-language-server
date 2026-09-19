@@ -29,11 +29,13 @@ let diagnostic_to_js { Analysis.severity; code; pos; message } =
     val message = Js.string message
   end
 
-let check source =
+let check source file =
   match !env with
     | None -> failwith "loadEnv must be called first"
     | Some env ->
-        let result = Analysis.check ~env (Js.to_string source) in
+        let result =
+          Analysis.check ~file:(Js.to_string file) ~env (Js.to_string source)
+        in
         last_result := Some result;
         Js.array (Array.of_list (List.map diagnostic_to_js result.diagnostics))
 
@@ -86,7 +88,7 @@ let () =
   Js.export "liquidsoap"
     (object%js
        method loadEnv dump = load_env dump
-       method check source = check source
+       method check source file = check source file
        method typeAt line column = type_at line column
        method localsAt line column = locals_at line column
        method scopeAt line column = scope_at line column

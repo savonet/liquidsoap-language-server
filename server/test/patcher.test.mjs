@@ -32,7 +32,7 @@ for (const name of cases) {
   test(name, { todo: knownFailures.has(name) }, () => {
     const source = fs.readFileSync(path.join(casesDir, name), "utf8");
     const parseErrors = analysis
-      .check(patch(source).source)
+      .check(patch(source).source, "")
       .filter(
         ({ severity, code }) =>
           severity === "error" && parseErrorCodes.has(code),

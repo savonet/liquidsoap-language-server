@@ -6,7 +6,7 @@ import {
   Position,
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import type { Analysis, Method } from "./analysis";
+import { type Analysis, type Method, scriptPath } from "./analysis";
 import { byteColumn, lineText } from "./positions";
 
 const partialName = /[\p{L}_][\p{L}\p{N}_']*$/u;
@@ -28,7 +28,7 @@ const checkEdited = (
   if (offset === undefined) return undefined;
   const patched = TextDocument.create(document.uri, "liquidsoap", 0, source);
   const { line, character } = patched.positionAt(offset);
-  analysis.check(source);
+  analysis.check(source, scriptPath(document.uri));
   return { line: line + 1, column: byteColumn(lineText(patched, line), character) };
 };
 
