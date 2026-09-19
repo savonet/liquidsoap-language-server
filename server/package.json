@@ -1,0 +1,29 @@
+{
+  "name": "liquidsoap-language-server",
+  "version": "0.0.0",
+  "description": "Language server for Liquidsoap scripts",
+  "license": "GPL-2.0-or-later",
+  "private": true,
+  "bin": {
+    "liquidsoap-language-server": "dist/server.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "build": "tsc && node scripts/copy-assets.mjs",
+    "test": "node --test 'test/**/*.test.mjs'"
+  },
+  "dependencies": {
+    "vscode-languageserver": "catalog:",
+    "vscode-languageserver-textdocument": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vscode-jsonrpc": "catalog:"
+  }
+}
