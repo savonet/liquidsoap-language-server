@@ -53,6 +53,35 @@ let locals_at line column =
           (Array.of_list
              (List.map Js.string (Analysis.locals_at result ~line ~column)))
 
+let scope_at line column =
+  match (!env, !last_result) with
+    | Some env, Some result ->
+        Js.array
+          (Array.of_list
+             (List.map Js.string (Analysis.scope_at ~env result ~line ~column)))
+    | _ -> Js.array [||]
+
+let methods_to_js methods =
+  Js.array
+    (Array.of_list
+       (List.map
+          (fun (name, typ) ->
+            object%js
+              val name = Js.string name
+              val type_ = Js.string typ
+            end)
+          methods))
+
+let methods_at line column =
+  match !last_result with
+    | None -> Js.array [||]
+    | Some result -> methods_to_js (Analysis.methods_at result ~line ~column)
+
+let null_methods () =
+  match !env with
+    | None -> Js.array [||]
+    | Some env -> methods_to_js (Analysis.null_methods ~env)
+
 let () =
   Js.export "liquidsoap"
     (object%js
@@ -60,4 +89,7 @@ let () =
        method check source = check source
        method typeAt line column = type_at line column
        method localsAt line column = locals_at line column
+       method scopeAt line column = scope_at line column
+       method methodsAt line column = methods_at line column
+       method nullMethods = null_methods ()
     end)

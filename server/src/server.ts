@@ -8,6 +8,7 @@ import {
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { loadAnalysis } from "./analysis";
+import { complete } from "./completion";
 import { diagnose } from "./diagnostics";
 import { loadDocs } from "./docs";
 import { hover } from "./hover";
@@ -22,6 +23,7 @@ connection.onInitialize(() => ({
   capabilities: {
     textDocumentSync: TextDocumentSyncKind.Incremental,
     hoverProvider: true,
+    completionProvider: { triggerCharacters: ["."] },
   },
 }));
 
@@ -37,6 +39,12 @@ connection.onHover(async ({ textDocument, position }) => {
   const document = documents.get(textDocument.uri);
   if (!document) return null;
   return hover(await analysis, await patcher, docs, document, position);
+});
+
+connection.onCompletion(async ({ textDocument, position }) => {
+  const document = documents.get(textDocument.uri);
+  if (!document) return [];
+  return complete(await analysis, await patcher, document, position);
 });
 
 documents.onDidClose(({ document }) =>

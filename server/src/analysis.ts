@@ -12,10 +12,18 @@ export interface RawDiagnostic {
   message: string;
 }
 
+export interface Method {
+  name: string;
+  type: string;
+}
+
 export interface Analysis {
   check(source: string): RawDiagnostic[];
   typeAt(line: number, column: number): string | null;
   localsAt(line: number, column: number): string[];
+  scopeAt(line: number, column: number): string[];
+  methodsAt(line: number, column: number): Method[];
+  nullMethods(): Method[];
 }
 
 interface WasmModule extends Analysis {

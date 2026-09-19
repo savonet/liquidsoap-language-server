@@ -58,6 +58,11 @@ export const startServer = async () => {
         textDocument: { uri: `file:///${name}` },
         position: { line, character },
       }),
+    complete: (name, line, character) =>
+      connection.sendRequest("textDocument/completion", {
+        textDocument: { uri: `file:///${name}` },
+        position: { line, character },
+      }),
     stop: () => {
       connection.dispose();
       child.kill();

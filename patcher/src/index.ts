@@ -21,7 +21,8 @@ export interface Patched {
   errors: SyntaxError[];
 }
 
-const placeholder = "💣()";
+/** An expression that typechecks as any type. */
+export const placeholder = "💣()";
 
 const sequenceContainers = new Set([
   "source_file",
