@@ -1,0 +1,25 @@
+{
+  "name": "liquidsoap-patcher",
+  "version": "0.0.0",
+  "description": "Turns a broken Liquidsoap script into a valid one for analysis",
+  "license": "GPL-2.0-or-later",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "grammar"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "build:grammar": "node scripts/build-grammar.mjs",
+    "test": "node --test 'test/**/*.test.mjs'"
+  },
+  "dependencies": {
+    "web-tree-sitter": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

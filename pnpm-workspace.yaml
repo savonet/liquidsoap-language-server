@@ -1,4 +1,5 @@
 packages:
+  - patcher
   - server
 
 catalog:
@@ -7,3 +8,4 @@ catalog:
   vscode-jsonrpc: ^9.0.2
   vscode-languageserver: ^10.1.1
   vscode-languageserver-textdocument: ^1.0.14
+  web-tree-sitter: ^0.27.0
