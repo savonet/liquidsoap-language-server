@@ -21,7 +21,7 @@ active: ?duration : float?
 --- signature 7:15 ---
 (none)
 --- signature 8:18 ---
-amplify(?id : string?, ?override : {string?}, source(audio='a, 'b))
-active: (none)
+amplify(?id : string?, ?override : {string?}, {float}, source(audio='a, 'b))
+active: source(audio='a, 'b)
 --- signature 9:0 ---
 (none)

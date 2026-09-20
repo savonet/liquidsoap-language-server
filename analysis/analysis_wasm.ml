@@ -5,10 +5,7 @@ let env = ref None
 let last_result = ref None
 
 let load_env dump =
-  env :=
-    Some
-      (Analysis.load_env ~version:Liquidsoap_lang_data.Build_config.version
-         (Typed_array.String.of_uint8Array dump))
+  env := Some (Analysis.load_env (Typed_array.String.of_uint8Array dump))
 
 let diagnostic_to_js { Analysis.severity; code; pos; message } =
   let { Liquidsoap_lang_prelude.Pos.fname; lstart; cstart; lstop; cstop } =
