@@ -1,0 +1,37 @@
+--- diagnostics ---
+error 15 10:0-10:38: Missing arguments in function application: synchronous : bool.
+--- tokens ---
+1:0-9 variable declaration
+2:4-5 function declaration
+2:6-7 parameter declaration
+2:10-11 parameter declaration
+3:2-4 variable declaration
+3:6-8 variable
+3:10-11 variable
+4:2-7 function
+4:8-9 variable
+6:0-2 function declaration
+6:9-10 parameter declaration
+6:15-16 variable
+7:0-2 variable declaration
+7:5-11 property
+8:0-2 variable declaration
+8:4-5 variable
+8:6-11 property
+9:0-2 variable declaration
+9:4-8 function
+10:0-1 variable
+10:2-10 method
+10:16-17 parameter declaration
+10:22-27 function
+10:28-36 variable
+11:4-5 function declaration
+11:7-9 parameter declaration
+11:11-14 type
+11:19-21 variable
+12:0-6 function
+12:8-9 variable
+12:11-12 variable
+12:14-15 variable
+12:17-18 variable
+12:20-21 variable

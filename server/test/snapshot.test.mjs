@@ -1,5 +1,5 @@
 // Each script in cases/ is opened in the server, and its diagnostics and the
-// answers to its `#? hover|complete|definition|signature L:C`, `#? resolve L:C label` and `#? symbols|format` queries are checked against
+// answers to its `#? hover|complete|definition|signature L:C`, `#? resolve L:C label` and `#? symbols|format|tokens` queries are checked against
 // expected/. Lines start at 1 and characters are UTF-16 code units from 0, as
 // the editor counts them. Run with UPDATE=1 to rewrite them, then review the
 // diff.
@@ -98,6 +98,22 @@ const answer = async (file, { query, line, character, label }) => {
     const [{ label, parameters }] = help.signatures;
     const active = parameters[help.activeParameter ?? -1]?.label;
     return `${label}\nactive: ${active ? label.slice(...active) : "(none)"}`;
+  }
+  if (query === "tokens") {
+    const { data } = await server.semanticTokens(file);
+    const names = ["function", "method", "parameter", "property", "type", "variable"];
+    const printed = [];
+    let line = 0;
+    let character = 0;
+    for (let i = 0; i < data.length; i += 5) {
+      const [deltaLine, deltaStart, length, type, modifiers] = data.slice(i, i + 5);
+      line += deltaLine;
+      character = deltaLine === 0 ? character + deltaStart : deltaStart;
+      printed.push(
+        `${line + 1}:${character}-${character + length} ${names[type]}${modifiers & 1 ? " declaration" : ""}`,
+      );
+    }
+    return printed.join("\n");
   }
   if (query === "symbols") return printSymbols(await server.symbols(file)).join("\n");
   if (query === "hover")

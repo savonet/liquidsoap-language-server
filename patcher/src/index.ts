@@ -1,8 +1,10 @@
 import * as path from "node:path";
 import { Language, Node, Parser } from "web-tree-sitter";
 import { type Definition, definitions } from "./outline";
+import { type Token, tokens } from "./tokens";
 
 export type { Definition } from "./outline";
+export type { Token, TokenType } from "./tokens";
 
 /** A replacement in the original source; offsets are JavaScript string indices. */
 export interface Edit {
@@ -299,6 +301,14 @@ export type Outline = (source: string) => Definition[];
 export const createOutline = async (grammar = defaultGrammar): Promise<Outline> => {
   const withTree = await loadParser(grammar);
   return (source) => withTree(source, definitions);
+};
+
+export type Tokens = (source: string) => Token[];
+
+/** The names of a script, classified for highlighting. */
+export const createTokens = async (grammar = defaultGrammar): Promise<Tokens> => {
+  const withTree = await loadParser(grammar);
+  return (source) => withTree(source, tokens);
 };
 
 export const createPatcher = async (grammar = defaultGrammar): Promise<Patcher> => {

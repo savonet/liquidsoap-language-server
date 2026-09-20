@@ -93,6 +93,10 @@ export const startServer = async (env = { LIQUIDSOAP: "" }) => {
         position: { line, character },
       }),
     resolve: (item) => connection.sendRequest("completionItem/resolve", item),
+    semanticTokens: (file) =>
+      connection.sendRequest("textDocument/semanticTokens/full", {
+        textDocument: { uri: pathToFileURL(file).href },
+      }),
     symbols: (file) =>
       connection.sendRequest("textDocument/documentSymbol", {
         textDocument: { uri: pathToFileURL(file).href },

@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { createOutline, createPatcher } from "liquidsoap-patcher";
+import { createOutline, createPatcher, createTokens } from "liquidsoap-patcher";
 import {
   createConnection,
   ProposedFeatures,
@@ -13,6 +13,7 @@ import { definition } from "./definition";
 import { diagnose } from "./diagnostics";
 import { format } from "./formatting";
 import { hover } from "./hover";
+import { legend, semanticTokens } from "./semantic";
 import { signatureHelp } from "./signature";
 import { symbols } from "./symbols";
 
@@ -22,6 +23,7 @@ const stdlib = loadStdlib(__dirname);
 const analysis = stdlib.then(({ analysis }) => analysis);
 const patcher = createPatcher();
 const outline = createOutline();
+const tokens = createTokens();
 const docs = stdlib.then(({ docs }) => docs);
 
 connection.onInitialize(() => ({
@@ -29,6 +31,7 @@ connection.onInitialize(() => ({
     textDocumentSync: TextDocumentSyncKind.Incremental,
     hoverProvider: true,
     documentSymbolProvider: true,
+    semanticTokensProvider: { legend, full: true },
     definitionProvider: true,
     documentFormattingProvider: true,
     signatureHelpProvider: { triggerCharacters: ["(", ","] },
@@ -87,6 +90,12 @@ connection.onSignatureHelp(async ({ textDocument, position }) => {
   return signatureHelp(await analysis, await patcher, await docs, document, position);
 });
 
+connection.languages.semanticTokens.on(async ({ textDocument }) => {
+  const document = documents.get(textDocument.uri);
+  if (!document) return { data: [] };
+  return semanticTokens(await tokens, document);
+});
+
 connection.onDocumentSymbol(async ({ textDocument }) => {
   const document = documents.get(textDocument.uri);
   if (!document) return [];
@@ -103,7 +112,7 @@ stdlib.then(({ description }) =>
   connection.console.info(`Checking scripts against ${description}.`),
 );
 
-Promise.all([analysis, patcher, outline]).catch((error) => {
+Promise.all([analysis, patcher, outline, tokens]).catch((error) => {
   connection.console.error(`Could not start: ${error}`);
   process.exit(1);
 });
