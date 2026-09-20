@@ -22,6 +22,8 @@ env:
 jobs:
   test:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 
@@ -101,3 +103,21 @@ jobs:
           LIQUIDSOAP_FUNCTIONS_JSON: ${{ github.workspace }}/_deps/liquidsoap/functions.json
 
       - run: pnpm test
+
+      # Each push to main replaces the tarball users install from, until the
+      # server is published on npm.
+      - name: Pack the server
+        if: github.event_name == 'push'
+        run: |
+          node scripts/pack.mjs "0.0.0-main.$(git rev-parse --short HEAD)" "$RUNNER_TEMP/pack"
+          mv "$RUNNER_TEMP"/pack/*.tgz "$RUNNER_TEMP/liquidsoap-language-server.tgz"
+
+      - name: Publish the build from main
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view main-build > /dev/null 2>&1 ||
+            gh release create main-build --prerelease --title "Latest build from main" \
+              --notes "The server built from the latest commit on main. See the README to install it."
+          gh release upload main-build "$RUNNER_TEMP/liquidsoap-language-server.tgz" --clobber
