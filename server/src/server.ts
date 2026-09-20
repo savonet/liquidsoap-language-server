@@ -7,22 +7,22 @@ import {
   TextDocumentSyncKind,
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
-import { loadAnalysis } from "./analysis";
+import { loadStdlib } from "./stdlib";
 import { complete, resolve } from "./completion";
 import { definition } from "./definition";
 import { diagnose } from "./diagnostics";
 import { format } from "./formatting";
-import { loadDocs } from "./docs";
 import { hover } from "./hover";
 import { signatureHelp } from "./signature";
 import { symbols } from "./symbols";
 
 const connection = createConnection(ProposedFeatures.all);
 const documents = new TextDocuments(TextDocument);
-const analysis = loadAnalysis(__dirname);
+const stdlib = loadStdlib(__dirname);
+const analysis = stdlib.then(({ analysis }) => analysis);
 const patcher = createPatcher();
 const outline = createOutline();
-const docs = loadDocs(__dirname);
+const docs = stdlib.then(({ docs }) => docs);
 
 connection.onInitialize(() => ({
   capabilities: {
@@ -58,13 +58,13 @@ documents.onDidChangeContent(({ document }) => {
 connection.onHover(async ({ textDocument, position }) => {
   const document = documents.get(textDocument.uri);
   if (!document) return null;
-  return hover(await analysis, await patcher, docs, document, position);
+  return hover(await analysis, await patcher, await docs, document, position);
 });
 
 connection.onCompletion(async ({ textDocument, position }) => {
   const document = documents.get(textDocument.uri);
   if (!document) return [];
-  return complete(await analysis, await patcher, docs, document, position);
+  return complete(await analysis, await patcher, await docs, document, position);
 });
 
 connection.onDefinition(async ({ textDocument, position }) => {
@@ -73,7 +73,7 @@ connection.onDefinition(async ({ textDocument, position }) => {
   return definition(await analysis, await patcher, document, position);
 });
 
-connection.onCompletionResolve((completion) => resolve(docs, completion));
+connection.onCompletionResolve(async (completion) => resolve(await docs, completion));
 
 connection.onDocumentFormatting(async ({ textDocument }) => {
   const document = documents.get(textDocument.uri);
@@ -84,7 +84,7 @@ connection.onDocumentFormatting(async ({ textDocument }) => {
 connection.onSignatureHelp(async ({ textDocument, position }) => {
   const document = documents.get(textDocument.uri);
   if (!document) return null;
-  return signatureHelp(await analysis, await patcher, docs, document, position);
+  return signatureHelp(await analysis, await patcher, await docs, document, position);
 });
 
 connection.onDocumentSymbol(async ({ textDocument }) => {
@@ -98,6 +98,10 @@ documents.onDidClose(({ document }) => {
   pendingDiagnostics.delete(document.uri);
   connection.sendDiagnostics({ uri: document.uri, diagnostics: [] });
 });
+
+stdlib.then(({ description }) =>
+  connection.console.info(`Checking scripts against ${description}.`),
+);
 
 Promise.all([analysis, patcher, outline]).catch((error) => {
   connection.console.error(`Could not start: ${error}`);

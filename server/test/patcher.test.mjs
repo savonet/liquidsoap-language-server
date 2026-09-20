@@ -22,7 +22,9 @@ const parseErrorCodes = new Set([1, 2, 3]);
 let analysis;
 let patch;
 before(async () => {
-  analysis = await require(path.join(dist, "analysis.js")).loadAnalysis(dist);
+  analysis = await require(path.join(dist, "analysis.js")).loadAnalysis(
+    fs.readFileSync(path.join(dist, "stdlib.types")),
+  );
   patch = await createPatcher();
 });
 

@@ -10,14 +10,6 @@ This is mostly the standard library editing itself: `%argsof` appears 85 times i
 
 To fix it, Liquidsoap would need to build the arguments from `f`'s type when the builtin is not registered, with a hook for the analysis to resolve a name to a type, and the universal placeholder as each default.
 
-## Use the standard library of the liquidsoap on the machine
-
-The bundled `stdlib.types` and documentation come from the build CI pinned, so they carry that build's optional dependencies and the LV2 and LADSPA plugins of the machine that built it, which say nothing about the user's.
-
-Where a `liquidsoap` is installed, the server could run `liquidsoap --cache-js-stdlib <file>` and `liquidsoap --list-functions-json` once, cache both under the user's cache directory keyed by the binary's path and mtime, and load them instead. The typing dump carries its own format version, so any liquidsoap writing that format is readable, and a dump the server cannot read falls back to the bundled one. The operators would then be the ones that user actually has, LV2 and LADSPA included.
-
-Open ends: which setting names the binary (`liquidsoap.path`, or the `PATH`), and loading the bundled files first so that startup is not delayed by generating the dump.
-
 ## Publishing
 
 The server is installed from the tarball attached to the `main-build` prerelease. With Liquidsoap 2.5.0 it should be published on npm, which needs a decision on how a released server gets its reference standard library from Liquidsoap's CI, and on how package versions track Liquidsoap releases.

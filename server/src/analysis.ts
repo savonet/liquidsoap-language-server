@@ -75,9 +75,10 @@ export const rememberLastCheck = (analysis: Analysis): Analysis => {
   };
 };
 
-export const loadAnalysis = async (dir: string): Promise<Analysis> => {
-  const exported = require(path.join(dir, "analysis_wasm.bc.wasm.js"));
+/** Loads the analysis module, typing scripts against the environment in [dump]. */
+export const loadAnalysis = async (dump: Uint8Array): Promise<Analysis> => {
+  const exported = require(path.join(__dirname, "analysis_wasm.bc.wasm.js"));
   const module = await waitForExport(exported);
-  module.loadEnv(fs.readFileSync(path.join(dir, "stdlib.types")));
+  module.loadEnv(dump);
   return rememberLastCheck(module);
 };

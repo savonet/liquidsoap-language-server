@@ -5,7 +5,11 @@ let env = ref None
 let last_result = ref None
 
 let load_env dump =
-  env := Some (Analysis.load_env (Typed_array.String.of_uint8Array dump))
+  match Analysis.load_env (Typed_array.String.of_uint8Array dump) with
+    | loaded -> env := Some loaded
+    | exception Failure message ->
+        Js.Js_error.raise_
+          (Js.Js_error.of_error (new%js Js.error_constr (Js.string message)))
 
 let diagnostic_to_js { Analysis.severity; code; pos; message } =
   let { Liquidsoap_lang_prelude.Pos.fname; lstart; cstart; lstop; cstop } =

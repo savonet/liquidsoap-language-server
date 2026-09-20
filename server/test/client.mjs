@@ -15,9 +15,12 @@ const server = path.join(
   "server.js",
 );
 
-export const startServer = async () => {
+// Without `LIQUIDSOAP`, the server would pick up the one installed on the
+// machine running the tests.
+export const startServer = async (env = { LIQUIDSOAP: "" }) => {
   const child = spawn(process.execPath, [server, "--stdio"], {
     stdio: ["pipe", "pipe", "inherit"],
+    env: { ...process.env, ...env },
   });
   const connection = createMessageConnection(
     new StreamMessageReader(child.stdout),
@@ -39,6 +42,8 @@ export const startServer = async () => {
       reject(new Error(`The server exited with code ${code}.`));
     waiters.clear();
   });
+  const logs = [];
+  connection.onNotification("window/logMessage", ({ message }) => logs.push(message));
   connection.listen();
   await connection.sendRequest("initialize", {
     processId: process.pid,
@@ -92,6 +97,7 @@ export const startServer = async () => {
       connection.sendRequest("textDocument/documentSymbol", {
         textDocument: { uri: pathToFileURL(file).href },
       }),
+    logs,
     stop: () => {
       connection.dispose();
       child.kill();

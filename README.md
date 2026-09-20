@@ -18,7 +18,7 @@ This is early work. Feedback and bug reports are welcome on the [issue tracker](
 
 A script you are editing is usually not valid Liquidsoap at every keystroke. The server tries to replace the broken parts with a universal placeholder, so that the rest of the script keeps its errors, types and completions.
 
-The server knows the standard library of the Liquidsoap version it was built with, not of the one installed on your machine. Operators that come from plugins installed on a machine, such as LV2 and LADSPA, are not documented.
+Where `liquidsoap` is installed, the server asks it for its standard library, so the operators it knows are the ones you have, LV2 and LADSPA plugins included. It reads that once per Liquidsoap version, and keeps it under `~/.cache/liquidsoap-language-server/`. Set `LIQUIDSOAP` to another binary to pick one, or to nothing (`LIQUIDSOAP=`) to always use the standard library the server ships with, which is also what happens when no `liquidsoap` is found, or when its version is too old to be read.
 
 ## Installing
 

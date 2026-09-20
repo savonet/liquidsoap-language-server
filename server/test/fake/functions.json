@@ -1,0 +1,17 @@
+{
+  "sine": {
+    "type": "(?id : string?, ?{float}) -> source(audio=pcm)",
+    "description": "A sine from the fake liquidsoap.",
+    "flags": [],
+    "arguments": [
+      { "label": "id", "type": "string?", "default": "null", "description": "" },
+      { "label": "", "type": "{float}", "default": "440.0", "description": "" }
+    ]
+  },
+  "lv2.reverb": {
+    "type": "(source(audio='a)) -> source(audio='a)",
+    "description": "A plugin installed on this machine.",
+    "flags": [],
+    "arguments": []
+  }
+}

@@ -1,0 +1,10 @@
+#!/bin/sh
+# Stands in for liquidsoap: the server asks it for its version, its typing
+# environment and its documentation.
+echo "$@" >> "$FAKE_CALLS"
+case "$1" in
+  --version) echo "Liquidsoap 9.9.9-fake" ;;
+  --cache-js-stdlib) cp "$FAKE_TYPES" "$2" ;;
+  --list-functions-json) cat "$FAKE_FUNCTIONS" ;;
+  *) exit 1 ;;
+esac
