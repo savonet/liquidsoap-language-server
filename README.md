@@ -23,7 +23,7 @@ Where `liquidsoap` is installed, the server asks it for its standard library, so
 
 ## Installing
 
-The server needs [Node.js](https://nodejs.org) 22 or later.
+The server needs [Node.js](https://nodejs.org) 22 or later. In Visual Studio Code, the [extension](#visual-studio-code) ships the server, so none of this is needed.
 
 The server will be published on npm with Liquidsoap 2.5.0. Until then, install the latest build from the `main` branch:
 
@@ -103,7 +103,9 @@ Errors show with Flymake, documentation and a function's parameters in the echo 
 
 ### Visual Studio Code
 
-The Liquidsoap extension for VS Code does not start the language server yet.
+The [Liquidsoap extension](https://github.com/savonet/vscode-liquidsoap) starts the server and ships it, so there is nothing else to install. It is not on the Marketplace yet: build it from its repository, which explains how, and install the `.vsix` it writes with "Extensions: Install from VSIX..." in the command palette.
+
+Errors show in the editor and in the Problems panel, and the usual commands apply: F12 goes to a definition, Ctrl+Space completes, Shift+Alt+F formats. The web version of Visual Studio Code has highlighting and formatting only, since the server needs Node.
 
 ### Other editors
 
