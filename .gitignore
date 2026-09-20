@@ -4,3 +4,4 @@ dist/
 *.install
 patcher/grammar/*.wasm
 _deps/
+*.tgz
