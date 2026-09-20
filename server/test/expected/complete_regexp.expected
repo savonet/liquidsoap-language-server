@@ -1,0 +1,22 @@
+--- diagnostics ---
+error syntax 3:10-3:11: Syntax error.
+error 5 2:6-2:20: this value has no method `matches`
+  Its type is regexp
+.{
+  exec : (string) -> [int * string].{groups : [string * string]},
+  replace : (((string) -> string), string) -> string,
+  split : (string) -> [string],
+  test : (string) -> bool
+}.
+error 4 4:6-4:13: Undefined variable matches
+warning 3 3:12-3:47: This expression is returning a value that is ignored. Do you need to use its return value? If not, you can use the `ignore()` operator.
+--- complete 2:21 ---
+exec (method) : (string) -> [int * string].{groups : [string * string]}
+replace (method) : (((string) -> string), string) -> string
+split (method) : (string) -> [string]
+test (method) : (string) -> bool
+--- complete 3:27 ---
+exec (method) : (string) -> [int * string].{groups : [string * string]}
+replace (method) : (((string) -> string), string) -> string
+split (method) : (string) -> [string]
+test (method) : (string) -> bool
