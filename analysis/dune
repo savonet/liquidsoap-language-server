@@ -12,4 +12,5 @@
   js_of_ocaml
   liquidsoap-js
   liquidsoap-lang.data
-  liquidsoap-lang.tooling))
+  liquidsoap-lang.tooling
+  liquidsoap.core_lang_dummy))
