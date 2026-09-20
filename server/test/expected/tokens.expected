@@ -19,19 +19,25 @@ error 15 10:0-10:38: Missing arguments in function application: synchronous : bo
 8:4-5 variable
 8:6-11 property
 9:0-2 variable declaration
-9:4-8 function
+9:4-8 function library
 10:0-1 variable
-10:2-10 method
+10:2-10 method library
 10:16-17 parameter declaration
 10:22-27 function
 10:28-36 variable
 11:4-5 function declaration
 11:7-9 parameter declaration
-11:11-14 type
+11:11-14 type library
 11:19-21 variable
-12:0-6 function
-12:8-9 variable
-12:11-12 variable
-12:14-15 variable
-12:17-18 variable
-12:20-21 variable
+12:4-9 function declaration
+12:10-11 parameter declaration
+12:15-17 variable
+13:0-5 function
+14:0-6 variable library
+14:7-12 method
+14:13-14 variable
+15:0-6 function library
+15:8-9 variable
+15:11-12 variable
+15:14-15 variable
+15:17-18 variable

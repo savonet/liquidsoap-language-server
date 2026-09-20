@@ -9,6 +9,9 @@ n = r.alpha
 s = sine()
 s.on_track(fun (_) -> print(greeting))
 def h((x : int)) = x end
-ignore((f, g, n, s, h))
+def print(x) = x end
+print("not the standard library's")
+output.dummy(s)
+ignore((f, g, n, h))
 
 #? tokens

@@ -110,7 +110,7 @@ const answer = async (file, { query, line, character, label }) => {
       line += deltaLine;
       character = deltaLine === 0 ? character + deltaStart : deltaStart;
       printed.push(
-        `${line + 1}:${character}-${character + length} ${names[type]}${modifiers & 1 ? " declaration" : ""}`,
+        `${line + 1}:${character}-${character + length} ${names[type]}${modifiers & 1 ? " declaration" : ""}${modifiers & 2 ? " library" : ""}`,
       );
     }
     return printed.join("\n");

@@ -93,7 +93,7 @@ connection.onSignatureHelp(async ({ textDocument, position }) => {
 connection.languages.semanticTokens.on(async ({ textDocument }) => {
   const document = documents.get(textDocument.uri);
   if (!document) return { data: [] };
-  return semanticTokens(await tokens, document);
+  return semanticTokens(await tokens, await docs, document);
 });
 
 connection.onDocumentSymbol(async ({ textDocument }) => {
