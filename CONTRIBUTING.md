@@ -43,6 +43,10 @@ LIQUIDSOAP_FUNCTIONS_JSON=/path/to/liquidsoap/functions.json \
 pnpm test
 ```
 
+## Packing
+
+`node scripts/pack.mjs [version] [outdir]` packs the built server into one npm tarball, with the patcher bundled in. CI does this on each push to `main`, and attaches the tarball to the `main-build` prerelease, which the README's install command points to.
+
 ## Tests
 
 `pnpm test` runs both packages' tests. Most are snapshot tests:

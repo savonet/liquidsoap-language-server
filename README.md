@@ -24,13 +24,15 @@ The server knows the standard library of the Liquidsoap version it was built wit
 
 The server needs [Node.js](https://nodejs.org) 22 or later.
 
-Packages are not published yet, so the server has to be built from source. Building it needs the Liquidsoap sources and an OCaml toolchain; [CONTRIBUTING.md](CONTRIBUTING.md) has the steps. The server then starts with:
+The server will be published on npm with Liquidsoap 2.5.0. Until then, install the latest build from the `main` branch:
 
 ```sh
-node /path/to/liquidsoap-language-server/server/dist/server.js --stdio
+npm install -g https://github.com/savonet/liquidsoap-language-server/releases/download/main-build/liquidsoap-language-server.tgz
 ```
 
-In the editor setups below, replace `/path/to/liquidsoap-language-server` with where you built it. Nothing else needs to be installed next to `server/dist/`: the server's standard library and documentation are in it.
+This installs the `liquidsoap-language-server` command, which your editor starts as `liquidsoap-language-server --stdio`. Run the same command again to update. The build knows the standard library of Liquidsoap's development version.
+
+To build the server yourself instead, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Setting up your editor
 
@@ -42,11 +44,7 @@ Neovim 0.11 or later configures language servers without plugins. Add this to yo
 vim.filetype.add({ extension = { liq = "liquidsoap" } })
 
 vim.lsp.config("liquidsoap", {
-  cmd = {
-    "node",
-    "/path/to/liquidsoap-language-server/server/dist/server.js",
-    "--stdio",
-  },
+  cmd = { "liquidsoap-language-server", "--stdio" },
   filetypes = { "liquidsoap" },
   root_markers = { ".git" },
 })
@@ -69,8 +67,8 @@ Add this to `~/.config/helix/languages.toml`:
 
 ```toml
 [language-server.liquidsoap]
-command = "node"
-args = ["/path/to/liquidsoap-language-server/server/dist/server.js", "--stdio"]
+command = "liquidsoap-language-server"
+args = ["--stdio"]
 
 [[language]]
 name = "liquidsoap"
@@ -96,7 +94,7 @@ Emacs 29 and later come with the Eglot client. Liquidsoap's Emacs mode, `liquids
 
 (with-eval-after-load 'eglot
   (add-to-list 'eglot-server-programs
-               '(liquidsoap-mode . ("node" "/path/to/liquidsoap-language-server/server/dist/server.js" "--stdio"))))
+               '(liquidsoap-mode . ("liquidsoap-language-server" "--stdio"))))
 (add-hook 'liquidsoap-mode-hook #'eglot-ensure)
 ```
 
@@ -111,11 +109,11 @@ The Liquidsoap extension for VS Code does not start the language server yet.
 Any LSP client can start the server. It communicates over standard input and output, and handles files with the `.liq` extension. Configure your client to run:
 
 ```sh
-node /path/to/liquidsoap-language-server/server/dist/server.js --stdio
+liquidsoap-language-server --stdio
 ```
 
 ## Troubleshooting
 
-- **Nothing happens when opening a `.liq` file.** Check that your editor starts the server, with the health commands above. The server logs its errors to your editor's language server log.
+- **Nothing happens when opening a `.liq` file.** Check that `liquidsoap-language-server` is on the `PATH` your editor sees, and that your editor starts it, with the health commands above. The server logs its errors to your editor's language server log.
 - **The server reports errors in a script that `liquidsoap` runs fine.** The server may know a different Liquidsoap version than yours: see [Features](#features). Please report other cases on the issue tracker, with the script.
 - **An `%include`d file is not found.** Includes resolve next to the script, as `liquidsoap` does. A buffer that is not saved to a file cannot include files by a relative path.
