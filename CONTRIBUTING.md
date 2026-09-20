@@ -2,6 +2,8 @@
 
 This is the part for working on the server itself. The [README](README.md) is about using it.
 
+[TODO.md](TODO.md) lists the known gaps.
+
 ## Layout
 
 This is a pnpm workspace. Dependency versions are set once, in the catalog in `pnpm-workspace.yaml`.
