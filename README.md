@@ -14,6 +14,7 @@ This is early work. Feedback and bug reports are welcome on the [issue tracker](
 - **Signature help**: the parameters of a standard library function while you type its arguments.
 - **Go to definition** of a name your script defines, including in files you `%include`.
 - **Document outline**: the definitions of the script, nested inside the functions that define them.
+- **Highlighting**: functions, methods, parameters, properties and types are told apart by the parser, with the standard library's names marked, through semantic tokens.
 - **Formatting** with [liquidsoap-prettier](https://github.com/savonet/liquidsoap-prettier). A `.prettierrc` next to your script is respected.
 
 A script you are editing is usually not valid Liquidsoap at every keystroke. The server tries to replace the broken parts with a universal placeholder, so that the rest of the script keeps its errors, types and completions.

@@ -16,11 +16,12 @@ The server is installed from the tarball attached to the `main-build` prerelease
 
 ## Visual Studio Code
 
-The Liquidsoap extension does not start the server. It needs a client that launches the bundled `server.js`, or that finds `liquidsoap-language-server` on the `PATH`.
+The [extension](https://github.com/savonet/vscode-liquidsoap) starts the server and ships it in its package. It is not released yet, and the release should go together with the server's.
 
 ## Smaller things
 
 - Hovering a source prints its whole type, every method included. Long types could be shortened.
+- Semantic tokens classify a name where it is bound, so a use of a parameter is highlighted as a variable, and a method is never marked as the standard library's.
 - Completion checks the script on each request, since it edits the source around the cursor first. Only the unchanged script is cached.
 - A definition inside a region tree-sitter cannot parse is missing from the outline.
 - An error in a file included by an included file is reported at the top of the document, because the analysis does not say which `%include` brought it in.
