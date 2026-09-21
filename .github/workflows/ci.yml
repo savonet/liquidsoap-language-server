@@ -18,6 +18,10 @@ env:
   TREE_SITTER_LIQUIDSOAP_REF: a094345ace46277b23dbcb81a5d8cd972df32183
   BINARYEN_VERSION: "126"
   TREE_SITTER_CLI_VERSION: 0.26.11
+  # The static ffmpeg build installs under /usr/local, and its .pc files list
+  # the bundled archives under Libs.private only.
+  PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
+  PKG_CONFIG_ARGN: --static
 
 jobs:
   test:
@@ -44,6 +48,17 @@ jobs:
           curl -fsSL "https://github.com/WebAssembly/binaryen/releases/download/version_${BINARYEN_VERSION}/binaryen-version_${BINARYEN_VERSION}-x86_64-linux.tar.gz" | tar xz -C "$RUNNER_TEMP"
           echo "$RUNNER_TEMP/binaryen-version_${BINARYEN_VERSION}/bin" >> "$GITHUB_PATH"
           npm install -g "tree-sitter-cli@${TREE_SITTER_CLI_VERSION}"
+
+      # The stdlib the server ships is the one liquidsoap compiles, so the
+      # ffmpeg operators only show up if liquidsoap is built against ffmpeg.
+      - name: Install the static ffmpeg build
+        run: |
+          curl -fsSL https://liquidsoap.info/ffmpeg-static-build/key.asc |
+            sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/liquidsoap-ffmpeg.gpg
+          echo "deb https://liquidsoap.info/ffmpeg-static-build stable main" |
+            sudo tee /etc/apt/sources.list.d/liquidsoap-ffmpeg.list
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg-liquidsoap libbz2-dev
 
       - uses: ocaml/setup-ocaml@v3
         with:
@@ -72,12 +87,15 @@ jobs:
           done
           opam install -y --deps-only ./_deps/liquidsoap/opam/liquidsoap.opam ./_deps/liquidsoap/opam/liquidsoap-lang.opam ./_deps/liquidsoap/opam/liquidsoap-js.opam
           opam install -y --assume-depexts wasm_of_ocaml-compiler
+          opam install -y --assume-depexts conf-ffmpeg dune-configurator
 
       - name: Build liquidsoap
         working-directory: _deps/liquidsoap
         run: |
           opam exec -- dune build @install src/js/stdlib.types
           _build/default/src/bin/liquidsoap.exe --stdlib ./src/libs/stdlib.liq --list-functions-json > functions.json
+          grep -q '"ffmpeg.encode.audio"' functions.json ||
+            { echo "liquidsoap was built without ffmpeg support" >&2; exit 1; }
 
       - name: Build the analysis module
         working-directory: analysis
