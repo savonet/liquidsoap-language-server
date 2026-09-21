@@ -13,7 +13,7 @@ concurrency:
 env:
   # stdlib.types must come from the same liquidsoap commit as the libraries the
   # analysis module is built against.
-  LIQUIDSOAP_REF: 7211dbce5a4845a1de36a2116b343e282632a9d9
+  LIQUIDSOAP_REF: cb5959873c80790d531c90605f90fe18e9542966
   OPAM_REPOSITORY_REF: 8cdfa3296d9bc7d93273f46eb2438757e4fd5cf0
   TREE_SITTER_LIQUIDSOAP_REF: a094345ace46277b23dbcb81a5d8cd972df32183
   BINARYEN_VERSION: "126"
