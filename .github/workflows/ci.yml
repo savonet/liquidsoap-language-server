@@ -18,10 +18,6 @@ env:
   TREE_SITTER_LIQUIDSOAP_REF: a094345ace46277b23dbcb81a5d8cd972df32183
   BINARYEN_VERSION: "126"
   TREE_SITTER_CLI_VERSION: 0.26.11
-  # The static ffmpeg build bundles the .pc files of everything it links, so
-  # exposing its pkgconfig directory whole also switches on liquidsoap's srt,
-  # xiph and mp3 modules. Only ffmpeg's own files are linked into this one.
-  FFMPEG_PKG_CONFIG_PATH: /usr/local/lib/pkgconfig-ffmpeg
 
 jobs:
   test:
@@ -59,9 +55,11 @@ jobs:
             sudo tee /etc/apt/sources.list.d/liquidsoap-ffmpeg.list
           sudo apt-get update
           sudo apt-get install -y ffmpeg-liquidsoap libbz2-dev
-          sudo mkdir -p "$FFMPEG_PKG_CONFIG_PATH"
-          sudo ln -sf /usr/local/lib/pkgconfig/libav*.pc /usr/local/lib/pkgconfig/libsw*.pc \
-            "$FFMPEG_PKG_CONFIG_PATH/"
+          # /usr/local/lib/pkgconfig is on pkg-config's default search path, so
+          # the .pc files the build bundles for everything it links would also
+          # switch on liquidsoap's srt, xiph and mp3 modules.
+          sudo find /usr/local/lib/pkgconfig -name '*.pc' \
+            ! -name 'libav*.pc' ! -name 'libsw*.pc' -delete
           # Same wrapper liquidsoap's own CI image uses: the bundled assembly
           # relocates against globally-visible symbols, which ld rejects when
           # making the shared stub libraries dune builds alongside the static
@@ -98,12 +96,10 @@ jobs:
           done
           opam install -y --deps-only ./_deps/liquidsoap/opam/liquidsoap.opam ./_deps/liquidsoap/opam/liquidsoap-lang.opam ./_deps/liquidsoap/opam/liquidsoap-js.opam
           opam install -y --assume-depexts wasm_of_ocaml-compiler
-          PKG_CONFIG_PATH="$FFMPEG_PKG_CONFIG_PATH" opam install -y --no-depexts conf-ffmpeg dune-configurator
+          opam install -y --no-depexts conf-ffmpeg dune-configurator
 
       - name: Build liquidsoap
         working-directory: _deps/liquidsoap
-        env:
-          PKG_CONFIG_PATH: ${{ env.FFMPEG_PKG_CONFIG_PATH }}
         run: |
           opam exec -- dune build @install src/js/stdlib.types
           _build/default/src/bin/liquidsoap.exe --stdlib ./src/libs/stdlib.liq --list-functions-json > functions.json
