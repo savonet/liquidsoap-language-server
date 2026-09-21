@@ -19,9 +19,10 @@ env:
   BINARYEN_VERSION: "126"
   TREE_SITTER_CLI_VERSION: 0.26.11
   # The static ffmpeg build installs under /usr/local, and its .pc files list
-  # the bundled archives under Libs.private only.
-  PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
-  PKG_CONFIG_ARGN: --static
+  # the bundled archives under Libs.private only. Both variables stay scoped to
+  # the steps that detect ffmpeg: --static applied to every package makes
+  # pkg-config hand out static dependencies nothing else has installed.
+  FFMPEG_PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
 
 jobs:
   test:
@@ -87,10 +88,13 @@ jobs:
           done
           opam install -y --deps-only ./_deps/liquidsoap/opam/liquidsoap.opam ./_deps/liquidsoap/opam/liquidsoap-lang.opam ./_deps/liquidsoap/opam/liquidsoap-js.opam
           opam install -y --assume-depexts wasm_of_ocaml-compiler
-          opam install -y --assume-depexts conf-ffmpeg dune-configurator
+          PKG_CONFIG_PATH="$FFMPEG_PKG_CONFIG_PATH" opam install -y --assume-depexts conf-ffmpeg dune-configurator
 
       - name: Build liquidsoap
         working-directory: _deps/liquidsoap
+        env:
+          PKG_CONFIG_PATH: ${{ env.FFMPEG_PKG_CONFIG_PATH }}
+          PKG_CONFIG_ARGN: --static
         run: |
           opam exec -- dune build @install src/js/stdlib.types
           _build/default/src/bin/liquidsoap.exe --stdlib ./src/libs/stdlib.liq --list-functions-json > functions.json
