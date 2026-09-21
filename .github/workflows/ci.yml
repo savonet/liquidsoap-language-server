@@ -21,7 +21,10 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-24.04
+    # Newest image available, for the newest stock ffmpeg: the stdlib's
+    # ffmpeg.filter.* operators are generated from the filters libavfilter
+    # registers, so a newer ffmpeg means a fuller standard library.
+    runs-on: ubuntu-26.04
     permissions:
       contents: write
     steps:
@@ -45,30 +48,6 @@ jobs:
           echo "$RUNNER_TEMP/binaryen-version_${BINARYEN_VERSION}/bin" >> "$GITHUB_PATH"
           npm install -g "tree-sitter-cli@${TREE_SITTER_CLI_VERSION}"
 
-      # The stdlib the server ships is the one liquidsoap compiles, so the
-      # ffmpeg operators only show up if liquidsoap is built against ffmpeg.
-      - name: Install the static ffmpeg build
-        run: |
-          curl -fsSL https://liquidsoap.info/ffmpeg-static-build/key.asc |
-            sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/liquidsoap-ffmpeg.gpg
-          echo "deb https://liquidsoap.info/ffmpeg-static-build stable main" |
-            sudo tee /etc/apt/sources.list.d/liquidsoap-ffmpeg.list
-          sudo apt-get update
-          sudo apt-get install -y ffmpeg-liquidsoap libbz2-dev
-          # /usr/local/lib/pkgconfig is on pkg-config's default search path, so
-          # the .pc files the build bundles for everything it links would also
-          # switch on liquidsoap's srt, xiph and mp3 modules.
-          sudo find /usr/local/lib/pkgconfig -name '*.pc' \
-            ! -name 'libav*.pc' ! -name 'libsw*.pc' -delete
-          # Same wrapper liquidsoap's own CI image uses: the bundled assembly
-          # relocates against globally-visible symbols, which ld rejects when
-          # making the shared stub libraries dune builds alongside the static
-          # ones.
-          sudo mv /usr/bin/ld /usr/bin/ld.real
-          printf '#!/bin/sh\nfor a; do [ "$a" = "-shared" ] && exec /usr/bin/ld.real -Bsymbolic "$@"; done\nexec /usr/bin/ld.real "$@"\n' |
-            sudo tee /usr/bin/ld
-          sudo chmod +x /usr/bin/ld
-
       - uses: ocaml/setup-ocaml@v3
         with:
           ocaml-compiler: "5.5"
@@ -79,12 +58,14 @@ jobs:
       # opam copies are older than the checkout still builds it.
       - name: Locate the opam switch
         id: switch
-        run: echo "prefix=$(opam var prefix)" >> "$GITHUB_OUTPUT"
+        run: |
+          echo "prefix=$(opam var prefix)" >> "$GITHUB_OUTPUT"
+          echo "os=$(lsb_release -rs)" >> "$GITHUB_OUTPUT"
 
       - uses: actions/cache@v4
         with:
           path: ${{ steps.switch.outputs.prefix }}
-          key: opam-switch-${{ runner.os }}-${{ env.OPAM_REPOSITORY_REF }}-${{ hashFiles('_deps/liquidsoap/opam/*.opam', '_deps/liquidsoap/src/modules/synced/**/*.opam') }}
+          key: opam-switch-${{ runner.os }}-${{ steps.switch.outputs.os }}-${{ env.OPAM_REPOSITORY_REF }}-${{ hashFiles('_deps/liquidsoap/opam/*.opam', '_deps/liquidsoap/src/modules/synced/**/*.opam') }}
 
       # The synced modules are liquidsoap's own copies, so they are pinned. Only
       # the required dependencies are installed, and binaryen comes from its
@@ -96,7 +77,10 @@ jobs:
           done
           opam install -y --deps-only ./_deps/liquidsoap/opam/liquidsoap.opam ./_deps/liquidsoap/opam/liquidsoap-lang.opam ./_deps/liquidsoap/opam/liquidsoap-js.opam
           opam install -y --assume-depexts wasm_of_ocaml-compiler
-          opam install -y --no-depexts conf-ffmpeg dune-configurator
+          # The stdlib the server ships is the one liquidsoap compiles, so its
+          # ffmpeg operators only show up if liquidsoap is built against
+          # ffmpeg. conf-ffmpeg's depexts pull the system libav* headers.
+          opam install -y conf-ffmpeg dune-configurator
 
       - name: Build liquidsoap
         working-directory: _deps/liquidsoap
