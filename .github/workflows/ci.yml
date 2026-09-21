@@ -18,10 +18,9 @@ env:
   TREE_SITTER_LIQUIDSOAP_REF: a094345ace46277b23dbcb81a5d8cd972df32183
   BINARYEN_VERSION: "126"
   TREE_SITTER_CLI_VERSION: 0.26.11
-  # The static ffmpeg build installs under /usr/local, and its .pc files list
-  # the bundled archives under Libs.private only. Both variables stay scoped to
-  # the steps that detect ffmpeg: --static applied to every package makes
-  # pkg-config hand out static dependencies nothing else has installed.
+  # The static ffmpeg build installs under /usr/local. It stays scoped to the
+  # steps that detect ffmpeg so its openssl and xiph .pc files do not shadow
+  # the system ones for every other package.
   FFMPEG_PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
 
 jobs:
@@ -60,6 +59,14 @@ jobs:
             sudo tee /etc/apt/sources.list.d/liquidsoap-ffmpeg.list
           sudo apt-get update
           sudo apt-get install -y ffmpeg-liquidsoap libbz2-dev
+          # Same wrapper liquidsoap's own CI image uses: the bundled assembly
+          # relocates against globally-visible symbols, which ld rejects when
+          # making the shared stub libraries dune builds alongside the static
+          # ones.
+          sudo mv /usr/bin/ld /usr/bin/ld.real
+          printf '#!/bin/sh\nfor a; do [ "$a" = "-shared" ] && exec /usr/bin/ld.real -Bsymbolic "$@"; done\nexec /usr/bin/ld.real "$@"\n' |
+            sudo tee /usr/bin/ld
+          sudo chmod +x /usr/bin/ld
 
       - uses: ocaml/setup-ocaml@v3
         with:
@@ -88,13 +95,12 @@ jobs:
           done
           opam install -y --deps-only ./_deps/liquidsoap/opam/liquidsoap.opam ./_deps/liquidsoap/opam/liquidsoap-lang.opam ./_deps/liquidsoap/opam/liquidsoap-js.opam
           opam install -y --assume-depexts wasm_of_ocaml-compiler
-          PKG_CONFIG_PATH="$FFMPEG_PKG_CONFIG_PATH" opam install -y --assume-depexts conf-ffmpeg dune-configurator
+          PKG_CONFIG_PATH="$FFMPEG_PKG_CONFIG_PATH" opam install -y --no-depexts conf-ffmpeg dune-configurator
 
       - name: Build liquidsoap
         working-directory: _deps/liquidsoap
         env:
           PKG_CONFIG_PATH: ${{ env.FFMPEG_PKG_CONFIG_PATH }}
-          PKG_CONFIG_ARGN: --static
         run: |
           opam exec -- dune build @install src/js/stdlib.types
           _build/default/src/bin/liquidsoap.exe --stdlib ./src/libs/stdlib.liq --list-functions-json > functions.json
