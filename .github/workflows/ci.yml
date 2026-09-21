@@ -18,10 +18,10 @@ env:
   TREE_SITTER_LIQUIDSOAP_REF: a094345ace46277b23dbcb81a5d8cd972df32183
   BINARYEN_VERSION: "126"
   TREE_SITTER_CLI_VERSION: 0.26.11
-  # The static ffmpeg build installs under /usr/local. It stays scoped to the
-  # steps that detect ffmpeg so its openssl and xiph .pc files do not shadow
-  # the system ones for every other package.
-  FFMPEG_PKG_CONFIG_PATH: /usr/local/lib/pkgconfig
+  # The static ffmpeg build bundles the .pc files of everything it links, so
+  # exposing its pkgconfig directory whole also switches on liquidsoap's srt,
+  # xiph and mp3 modules. Only ffmpeg's own files are linked into this one.
+  FFMPEG_PKG_CONFIG_PATH: /usr/local/lib/pkgconfig-ffmpeg
 
 jobs:
   test:
@@ -59,6 +59,9 @@ jobs:
             sudo tee /etc/apt/sources.list.d/liquidsoap-ffmpeg.list
           sudo apt-get update
           sudo apt-get install -y ffmpeg-liquidsoap libbz2-dev
+          sudo mkdir -p "$FFMPEG_PKG_CONFIG_PATH"
+          sudo ln -sf /usr/local/lib/pkgconfig/libav*.pc /usr/local/lib/pkgconfig/libsw*.pc \
+            "$FFMPEG_PKG_CONFIG_PATH/"
           # Same wrapper liquidsoap's own CI image uses: the bundled assembly
           # relocates against globally-visible symbols, which ld rejects when
           # making the shared stub libraries dune builds alongside the static
