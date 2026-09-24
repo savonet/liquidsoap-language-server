@@ -2,12 +2,7 @@ import type { Node } from "web-tree-sitter";
 
 /** What a name means, in the vocabulary the protocol uses for highlighting. */
 export type TokenType =
-  | "function"
-  | "method"
-  | "parameter"
-  | "property"
-  | "type"
-  | "variable";
+  "function" | "method" | "parameter" | "property" | "type" | "variable";
 
 /** A name to highlight; offsets are JavaScript string indices. */
 export interface Token {
@@ -28,8 +23,8 @@ const inType = (node: Node): boolean => {
 };
 
 const bindsFunction = (node: Node): boolean =>
-  node.namedChildren.find((child) => child?.type === "definition")
-    ?.namedChildren[0]?.type === "anonymous_function";
+  node.namedChildren.find((child) => child?.type === "definition")?.namedChildren[0]
+    ?.type === "anonymous_function";
 
 const typeOf = (node: Node, parent: Node): TokenType => {
   if (inType(node)) return "type";
@@ -53,7 +48,11 @@ export const tokens = (root: Node): Token[] => {
   const visit = (node: Node) => {
     const parent = node.parent;
     // Recovering from a syntax error can leave a node with no text.
-    if (parent && node.endIndex > node.startIndex && (node.type === "var" || node.type === "method"))
+    if (
+      parent &&
+      node.endIndex > node.startIndex &&
+      (node.type === "var" || node.type === "method")
+    )
       found.push({
         start: node.startIndex,
         length: node.endIndex - node.startIndex,

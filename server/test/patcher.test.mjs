@@ -36,8 +36,7 @@ for (const name of cases) {
     const parseErrors = analysis
       .check(patch(source).source, "")
       .filter(
-        ({ severity, code }) =>
-          severity === "error" && parseErrorCodes.has(code),
+        ({ severity, code }) => severity === "error" && parseErrorCodes.has(code),
       );
     assert.deepEqual(parseErrors, []);
   });

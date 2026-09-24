@@ -44,8 +44,7 @@ const sequenceContainers = new Set([
 ]);
 
 const statementOf = (node: Node): Node => {
-  while (node.parent && !sequenceContainers.has(node.parent.type))
-    node = node.parent;
+  while (node.parent && !sequenceContainers.has(node.parent.type)) node = node.parent;
   return node;
 };
 
@@ -56,11 +55,7 @@ const startsLine = (source: string, node: Node): boolean => {
 
 // Tree-sitter nests the statements it recovered after the damage inside the
 // ERROR node; keeping them is what keeps every later binding in scope.
-const isRecoveredStatement = (
-  source: string,
-  child: Node,
-  error: Node,
-): boolean =>
+const isRecoveredStatement = (source: string, child: Node, error: Node): boolean =>
   child.isNamed &&
   child.type !== "ERROR" &&
   child.startPosition.row > error.startPosition.row &&
@@ -84,7 +79,12 @@ const replacementText = (nodes: Node[]): string => {
 
 // The largest error-free node around [keep] outlives the rest of its
 // statement, which gives completion a term to look into while typing.
-const cut = (start: number, end: number, root: Node, keep: number): Edit[] | undefined => {
+const cut = (
+  start: number,
+  end: number,
+  root: Node,
+  keep: number,
+): Edit[] | undefined => {
   if (keep < start || keep >= end) return undefined;
   let node: Node | null = root.descendantForIndex(keep);
   while (
@@ -105,7 +105,8 @@ const replace = (nodes: Node[], keep?: number): Edit[] => {
   const first = nodes[0];
   const start = first.startIndex;
   const end = nodes[nodes.length - 1].endIndex;
-  const kept = keep === undefined ? undefined : cut(start, end, first.tree.rootNode, keep);
+  const kept =
+    keep === undefined ? undefined : cut(start, end, first.tree.rootNode, keep);
   if (kept) return kept;
   const before = first.previousSibling;
   const sameLine = before && before.endPosition.row === first.startPosition.row;
@@ -215,8 +216,7 @@ export const isPatched = (edits: Edit[], offset: number): boolean =>
   locate(edits, offset).patched;
 
 // Lines that continue the statement above rather than start a new one.
-const closingLine =
-  /^(end|else|elsif|then|do|catch|finally|%else|%endif)\b|^[)\]}]/;
+const closingLine = /^(end|else|elsif|then|do|catch|finally|%else|%endif)\b|^[)\]}]/;
 
 const blockOpeners = new Set(["def", "begin", "if", "while", "for", "try"]);
 const isBlockCloser = (type: string) => type === "end" || type.endsWith("_end");
@@ -281,10 +281,7 @@ const shifted = <T extends { start: number; end: number }>(
  * Maps an offset in the original source to the patched source, or `undefined`
  * when the patcher replaced the text there.
  */
-export const patchedOffset = (
-  edits: Edit[],
-  offset: number,
-): number | undefined => {
+export const patchedOffset = (edits: Edit[], offset: number): number | undefined => {
   let delta = 0;
   for (const edit of edits) {
     if (offset < edit.start) break;
@@ -355,8 +352,7 @@ export const createPatcher = async (grammar = defaultGrammar): Promise<Patcher> 
     const edits: Edit[] = [];
     const errors: SyntaxError[] = [];
     for (const chunk of topLevelChunks(source, root)) {
-      if (!flagged.some((e) => e.start < chunk.end && e.end >= chunk.start))
-        continue;
+      if (!flagged.some((e) => e.start < chunk.end && e.end >= chunk.start)) continue;
       const text = source.slice(chunk.start, chunk.end);
       withTree(text, (chunkRoot) => {
         if (!chunkRoot.hasError) return;

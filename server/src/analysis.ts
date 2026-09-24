@@ -42,9 +42,7 @@ const waitForExport = async (
 ): Promise<WasmModule> => {
   for (let attempt = 0; attempt < 2000; attempt++) {
     const module = (exported.liquidsoap ??
-      (globalThis as Record<string, unknown>).liquidsoap) as
-      | WasmModule
-      | undefined;
+      (globalThis as Record<string, unknown>).liquidsoap) as WasmModule | undefined;
     if (module) return module;
     await new Promise((resolve) => setTimeout(resolve, 5));
   }

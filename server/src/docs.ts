@@ -60,9 +60,7 @@ export const docsFromFunctions = (
 
 export const loadDocs = (dir: string): Docs =>
   new Map(
-    Object.entries(
-      JSON.parse(fs.readFileSync(path.join(dir, "docs.json"), "utf8")),
-    ),
+    Object.entries(JSON.parse(fs.readFileSync(path.join(dir, "docs.json"), "utf8"))),
   );
 
 const identifierChar = /[\p{L}\p{N}_'.]/u;

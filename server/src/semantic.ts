@@ -41,11 +41,7 @@ const fromLibrary = (docs: Docs, found: Token[], text: string) => {
   };
 };
 
-const encode = (
-  docs: Docs,
-  document: TextDocument,
-  found: Token[],
-): SemanticTokens => {
+const encode = (docs: Docs, document: TextDocument, found: Token[]): SemanticTokens => {
   const builder = new SemanticTokensBuilder();
   const library = fromLibrary(docs, found, document.getText());
   for (const token of found) {

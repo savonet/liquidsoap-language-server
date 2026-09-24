@@ -23,9 +23,7 @@ const scripts = {
 (async () => {
   let t = performance.now();
   const exported = require(path.resolve(target));
-  const liquidsoap = await waitFor(
-    () => exported.liquidsoap ?? globalThis.liquidsoap,
-  );
+  const liquidsoap = await waitFor(() => exported.liquidsoap ?? globalThis.liquidsoap);
   console.log(`module ready: ${since(t)}`);
 
   const dump = new Uint8Array(fs.readFileSync(dumpFile));
@@ -38,7 +36,8 @@ const scripts = {
     const diagnostics = liquidsoap.check(source);
     const took = since(t);
     const summary = Array.from(diagnostics).map(
-      (d) => `${d.severity} ${d.code} ${d.line}:${d.column} ${d.message.split("\n")[0]}`,
+      (d) =>
+        `${d.severity} ${d.code} ${d.line}:${d.column} ${d.message.split("\n")[0]}`,
     );
     console.log(`check ${name}: ${took}`, summary);
   }

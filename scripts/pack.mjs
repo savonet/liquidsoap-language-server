@@ -19,7 +19,11 @@ const pnpmPack = (packageDir, into) => {
     .split("\n")
     .at(-1);
   fs.mkdirSync(into, { recursive: true });
-  run("tar", ["xzf", path.resolve(packageDir, tarball), "-C", into, "--strip-components=1"], stage);
+  run(
+    "tar",
+    ["xzf", path.resolve(packageDir, tarball), "-C", into, "--strip-components=1"],
+    stage,
+  );
 };
 
 const server = path.join(stage, "server");
@@ -36,12 +40,20 @@ const patcherManifest = JSON.parse(
 // bundled too.
 const patcherDependencies = Object.entries(patcherManifest.dependencies ?? {});
 for (const [name, range] of patcherDependencies) {
-  const tarball = run("npm", ["pack", `${name}@${range}`, "--pack-destination", stage], stage)
+  const tarball = run(
+    "npm",
+    ["pack", `${name}@${range}`, "--pack-destination", stage],
+    stage,
+  )
     .split("\n")
     .at(-1);
   const into = path.join(server, "node_modules", name);
   fs.mkdirSync(into, { recursive: true });
-  run("tar", ["xzf", path.join(stage, tarball), "-C", into, "--strip-components=1"], stage);
+  run(
+    "tar",
+    ["xzf", path.join(stage, tarball), "-C", into, "--strip-components=1"],
+    stage,
+  );
 }
 delete manifest.private;
 delete manifest.devDependencies;

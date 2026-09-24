@@ -1,11 +1,7 @@
 import type { Patcher } from "liquidsoap-patcher";
 import { isPatched, originalOffset } from "liquidsoap-patcher";
 import * as path from "node:path";
-import {
-  Diagnostic,
-  DiagnosticSeverity,
-  Range,
-} from "vscode-languageserver/node";
+import { Diagnostic, DiagnosticSeverity, Range } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { type Analysis, type RawDiagnostic, scriptPath } from "./analysis";
 import { fileDocument, lineText, spanRange } from "./positions";
@@ -76,9 +72,7 @@ const semantic = (
     .check(patched.getText(), file)
     .filter(
       ({ severity, code }) =>
-        edits.length === 0 ||
-        severity !== "error" ||
-        !parseErrorCodes.has(code),
+        edits.length === 0 || severity !== "error" || !parseErrorCodes.has(code),
     );
   const isOwn = (raw: RawDiagnostic) => raw.file === file || raw.file === "";
   // An included library's unused definitions are not this script's concern.
