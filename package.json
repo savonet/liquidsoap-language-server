@@ -15,6 +15,7 @@
     "prettier": "catalog:"
   },
   "lint-staged": {
-    "*": "prettier --write --ignore-unknown"
+    "*": "prettier --write --ignore-unknown",
+    "*.{ml,mli}": "scripts/ocamlformat.sh"
   }
 }

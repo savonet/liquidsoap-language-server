@@ -60,7 +60,7 @@ Run a package's tests with `UPDATE=1` to rewrite its expected files, then review
 
 ## Formatting
 
-Code is formatted with [prettier](https://prettier.io): `pnpm run format`. `pnpm install` sets up a pre-commit hook with [husky](https://typicode.github.io/husky/), which formats the staged changes with [lint-staged](https://github.com/lint-staged/lint-staged) and runs `pnpm run typecheck`.
+Code is formatted with [prettier](https://prettier.io): `pnpm run format`. `pnpm install` sets up a pre-commit hook with [husky](https://typicode.github.io/husky/), which formats the staged changes with [lint-staged](https://github.com/lint-staged/lint-staged) and runs `pnpm run typecheck`. OCaml files are formatted with `ocamlformat` when the version installed is the one `analysis/.ocamlformat` asks for, and left alone otherwise.
 
 CI builds everything against the Liquidsoap commit pinned as `LIQUIDSOAP_REF` in `.github/workflows/ci.yml`. A change that needs a new analysis from Liquidsoap moves that pin.
 
