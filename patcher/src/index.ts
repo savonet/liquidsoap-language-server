@@ -82,22 +82,46 @@ const replacementText = (nodes: Node[]): string => {
   return placeholder;
 };
 
-const replace = (nodes: Node[]): Edit => {
+// The largest error-free node around [keep] outlives the rest of its
+// statement, which gives completion a term to look into while typing.
+const cut = (start: number, end: number, root: Node, keep: number): Edit[] | undefined => {
+  if (keep < start || keep >= end) return undefined;
+  let node: Node | null = root.descendantForIndex(keep);
+  while (
+    node?.parent &&
+    !node.parent.hasError &&
+    node.parent.startIndex >= start &&
+    node.parent.endIndex <= end
+  )
+    node = node.parent;
+  if (!node?.isNamed || node.hasError) return undefined;
+  return [
+    { start, end: node.startIndex, text: "\n" },
+    { start: node.endIndex, end, text: "" },
+  ];
+};
+
+const replace = (nodes: Node[], keep?: number): Edit[] => {
   const first = nodes[0];
+  const start = first.startIndex;
+  const end = nodes[nodes.length - 1].endIndex;
+  const kept = keep === undefined ? undefined : cut(start, end, first.tree.rootNode, keep);
+  if (kept) return kept;
   const before = first.previousSibling;
   const sameLine = before && before.endPosition.row === first.startPosition.row;
-  return {
-    start: first.startIndex,
-    end: nodes[nodes.length - 1].endIndex,
-    text: (sameLine ? "; " : "") + replacementText(nodes),
-  };
+  return [{ start, end, text: (sameLine ? "; " : "") + replacementText(nodes) }];
 };
 
 // Aliased keywords such as `def_end` are all spelled `end`.
 const missingText = (node: Node): string =>
   node.isNamed ? placeholder : node.type.replace(/^\w+_end$/, "end");
 
-const collect = (source: string, node: Node, edits: Edit[]): void => {
+const collect = (
+  source: string,
+  node: Node,
+  edits: Edit[],
+  keep: number | undefined,
+): void => {
   if (node.isMissing) {
     edits.push({
       start: node.startIndex,
@@ -107,26 +131,26 @@ const collect = (source: string, node: Node, edits: Edit[]): void => {
     return;
   }
   if (node.type !== "ERROR") {
-    for (const child of node.children) collect(source, child, edits);
+    for (const child of node.children) collect(source, child, edits, keep);
     return;
   }
   const children = node.children;
   if (!children.some((child) => isRecoveredStatement(source, child, node))) {
     const target = statementOf(node);
     edits.push(
-      replace(target === node && children.length ? children : [target]),
+      ...replace(target === node && children.length ? children : [target], keep),
     );
     return;
   }
   let loose: Node[] = [];
   for (const child of children) {
     if (isRecoveredStatement(source, child, node)) {
-      if (loose.length) edits.push(replace(loose));
+      if (loose.length) edits.push(...replace(loose, keep));
       loose = [];
-      collect(source, child, edits);
+      collect(source, child, edits, keep);
     } else loose.push(child);
   }
-  if (loose.length) edits.push(replace(loose));
+  if (loose.length) edits.push(...replace(loose, keep));
 };
 
 // A replaced statement already covers any edit inside it.
@@ -270,7 +294,11 @@ export const patchedOffset = (
   return offset + delta;
 };
 
-export type Patcher = (source: string) => Patched;
+/**
+ * With [keep], the expression around that offset survives the replacement of
+ * its broken statement.
+ */
+export type Patcher = (source: string, keep?: number) => Patched;
 
 type WithTree = <T>(source: string, fn: (root: Node) => T) => T;
 
@@ -314,15 +342,15 @@ export const createTokens = async (grammar = defaultGrammar): Promise<Tokens> =>
 export const createPatcher = async (grammar = defaultGrammar): Promise<Patcher> => {
   const withTree = await loadParser(grammar);
 
-  const patchWhole = (root: Node, source: string) => {
+  const patchWhole = (root: Node, source: string, keep?: number) => {
     const edits: Edit[] = [];
-    collect(source, root, edits);
+    collect(source, root, edits, keep);
     return { edits, errors: syntaxErrors(root) };
   };
 
   // tree-sitter's recovery can carry an unclosed bracket across the rest of
   // the file, so each top-level statement it flagged is reparsed on its own.
-  const patchChunks = (root: Node, source: string) => {
+  const patchChunks = (root: Node, source: string, keep?: number) => {
     const flagged = syntaxErrors(root);
     const edits: Edit[] = [];
     const errors: SyntaxError[] = [];
@@ -332,7 +360,11 @@ export const createPatcher = async (grammar = defaultGrammar): Promise<Patcher> 
       const text = source.slice(chunk.start, chunk.end);
       withTree(text, (chunkRoot) => {
         if (!chunkRoot.hasError) return;
-        const patched = patchWhole(chunkRoot, text);
+        const patched = patchWhole(
+          chunkRoot,
+          text,
+          keep === undefined ? undefined : keep - chunk.start,
+        );
         edits.push(...shifted(patched.edits, chunk.start));
         errors.push(...shifted(patched.errors, chunk.start));
       });
@@ -340,11 +372,11 @@ export const createPatcher = async (grammar = defaultGrammar): Promise<Patcher> 
     return edits.length ? { edits, errors } : undefined;
   };
 
-  return (source) =>
+  return (source, keep) =>
     withTree(source, (root) => {
       if (!root.hasError) return { source, edits: [], errors: [] };
       const { edits, errors } =
-        patchChunks(root, source) ?? patchWhole(root, source);
+        patchChunks(root, source, keep) ?? patchWhole(root, source, keep);
       const kept = outermost(edits);
       return { source: apply(source, kept), edits: kept, errors };
     });

@@ -1,0 +1,109 @@
+--- diagnostics ---
+error syntax 3:6-3:51: Syntax error.
+warning 4 1:0-1:7: Unused variable x
+--- complete 3:51 ---
+cpu (field) : {usage_getter : () -> () -> {system : float, total : float, user : float}}
+domain (method, documented) : () -> int
+domain_count (method, documented) : () -> int
+gc (field) : {
+  compact : () -> unit,
+  full_major : () -> unit,
+  get : () -> 
+        {
+          allocation_policy : int,
+          custom_major_ratio : int,
+          custom_minor_max_size : int,
+          custom_minor_ratio : int,
+          major_heap_increment : int,
+          max_overhead : int,
+          minor_heap_size : int,
+          space_overhead : int,
+          stack_limit : int,
+          verbose : int,
+          window_size : int},
+  major : () -> unit,
+  major_slice : (?int) -> unit,
+  minor : () -> unit,
+  print_stat : () -> unit,
+  quick_stat : () -> 
+               {
+                 compactions : int,
+                 forced_major_collections : int,
+                 fragments : int,
+                 free_blocks : int,
+                 free_words : int,
+                 heap_chunks : int,
+                 heap_words : int,
+                 largest_free : int,
+                 live_blocks : int,
+                 live_words : int,
+                 major_collections : int,
+                 major_words : float,
+                 minor_collections : int,
+                 minor_words : float,
+                 promoted_words : float,
+                 stack_size : int,
+                 top_heap_words : int},
+  set : (
+         {
+           allocation_policy : int,
+           custom_major_ratio : int,
+           custom_minor_max_size : int,
+           custom_minor_ratio : int,
+           major_heap_increment : int,
+           max_overhead : int,
+           minor_heap_size : int,
+           space_overhead : int,
+           stack_limit : int,
+           verbose : int,
+           window_size : int
+         }) -> unit,
+  stat : () -> 
+         {
+           compactions : int,
+           forced_major_collections : int,
+           fragments : int,
+           free_blocks : int,
+           free_words : int,
+           heap_chunks : int,
+           heap_words : int,
+           largest_free : int,
+           live_blocks : int,
+           live_words : int,
+           major_collections : int,
+           major_words : float,
+           minor_collections : int,
+           minor_words : float,
+           promoted_words : float,
+           stack_size : int,
+           top_heap_words : int}
+}
+locale (field) : {set : (string) -> unit}
+memory (method, documented) : (() -> 
+ {
+   pretty : 
+   {
+     process_managed_memory : string,
+     process_physical_memory : string,
+     process_private_memory : string,
+     process_swapped_memory : string,
+     process_virtual_memory : string,
+     total_physical_memory : string,
+     total_used_physical_memory : string,
+     total_used_virtual_memory : string,
+     total_virtual_memory : string
+   },
+   process_managed_memory : int,
+   process_physical_memory : int,
+   process_private_memory : int,
+   process_swapped_memory : int,
+   process_virtual_memory : int,
+   total_physical_memory : int,
+   total_used_physical_memory : int,
+   total_used_virtual_memory : int,
+   total_virtual_memory : int})
+.{
+  prettify_bytes : (?float_printer : ((float) -> string)?, ?signed : bool?,
+                    ?bits : bool?, ?binary : bool?, int) -> string
+}
+sys (field) : {word_size : int}

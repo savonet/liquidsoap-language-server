@@ -1,0 +1,6 @@
+--- diagnostics ---
+error syntax 3:6-3:41: Syntax error.
+warning 4 1:0-1:7: Unused variable x
+--- complete 3:41 ---
+x (variable)
+(standard library)

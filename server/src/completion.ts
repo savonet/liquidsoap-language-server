@@ -25,7 +25,7 @@ const checkEdited = (
 ): { line: number; column: number } | undefined => {
   const text = document.getText();
   const edited = text.slice(0, range.start) + range.text + text.slice(range.end);
-  const { source, edits } = patch(edited);
+  const { source, edits } = patch(edited, at);
   const offset = patchedOffset(edits, at);
   if (offset === undefined) return undefined;
   const patched = TextDocument.create(document.uri, "liquidsoap", 0, source);
