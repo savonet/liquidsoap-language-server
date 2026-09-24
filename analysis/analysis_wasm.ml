@@ -19,7 +19,8 @@ let diagnostic_to_js { Analysis.severity; code; pos; message } =
   in
   object%js
     val severity =
-      Js.string (match severity with `Error -> "error" | `Warning -> "warning")
+      Js.string
+        (match severity with `Error -> "error" | `Warning -> "warning")
 
     val code = code
     val file = Js.string fname
@@ -87,8 +88,13 @@ let definition_at line column =
         match Analysis.definition_at result ~line ~column with
           | None -> Js.null
           | Some pos ->
-              let { Liquidsoap_lang_prelude.Pos.fname; lstart; cstart; lstop; cstop }
-                  =
+              let {
+                Liquidsoap_lang_prelude.Pos.fname;
+                lstart;
+                cstart;
+                lstop;
+                cstop;
+              } =
                 Liquidsoap_lang_prelude.Pos.unpack pos
               in
               Js.some
