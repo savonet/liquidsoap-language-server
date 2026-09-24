@@ -1,0 +1,5 @@
+pnpm-lock.yaml
+patcher/test/cases/
+patcher/test/expected/
+server/test/cases/
+server/test/expected/

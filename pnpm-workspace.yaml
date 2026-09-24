@@ -4,7 +4,9 @@ packages:
 
 catalog:
   "@types/node": ^26.6.1
+  husky: ^9.1.7
   liquidsoap-prettier: ^1.9.0
+  lint-staged: ^17.5.1
   prettier: ^3.6.2
   typescript: ^7.0.2
   vscode-jsonrpc: ^9.0.2

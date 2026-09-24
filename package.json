@@ -3,7 +3,18 @@
   "private": true,
   "packageManager": "pnpm@11.24.0",
   "scripts": {
+    "prepare": "husky",
     "build": "pnpm -r run build",
+    "format": "prettier --write .",
+    "typecheck": "pnpm --filter liquidsoap-patcher run build && pnpm -r exec tsc --noEmit",
     "test": "pnpm -r run test"
+  },
+  "devDependencies": {
+    "husky": "catalog:",
+    "lint-staged": "catalog:",
+    "prettier": "catalog:"
+  },
+  "lint-staged": {
+    "*": "prettier --write --ignore-unknown"
   }
 }
