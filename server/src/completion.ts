@@ -8,6 +8,7 @@ import {
 } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { type Analysis, type Method, scriptPath } from "./analysis";
+import { patchScript } from "./checked";
 import { type Docs, formatDoc } from "./docs";
 import { byteColumn, lineText } from "./positions";
 
@@ -25,12 +26,13 @@ const checkEdited = (
 ): { line: number; column: number } | undefined => {
   const text = document.getText();
   const edited = text.slice(0, range.start) + range.text + text.slice(range.end);
-  const { source, edits } = patch(edited, at);
+  const file = scriptPath(document.uri);
+  const { source, edits } = patchScript(analysis, patch, edited, file, at);
   const offset = patchedOffset(edits, at);
   if (offset === undefined) return undefined;
   const patched = TextDocument.create(document.uri, "liquidsoap", 0, source);
   const { line, character } = patched.positionAt(offset);
-  analysis.check(source, scriptPath(document.uri));
+  analysis.check(source, file);
   return { line: line + 1, column: byteColumn(lineText(patched, line), character) };
 };
 
