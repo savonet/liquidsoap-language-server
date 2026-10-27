@@ -1,4 +1,6 @@
-def gain(s) = 💣() end
+def gain(s) =
+  amplify(0.8, ) 
+end
 
 def tagged(s) =
   s = gain(s)
