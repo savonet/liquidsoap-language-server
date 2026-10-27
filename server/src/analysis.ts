@@ -52,23 +52,45 @@ const waitForExport = async (
 export const scriptPath = (uri: string): string =>
   uri.startsWith("file:") ? fileURLToPath(uri) : "";
 
+// An exception the analysis does not describe leaves no position, and its
+// last result is the previous script's.
+const failedCheck = (file: string): RawDiagnostic => ({
+  severity: "error",
+  code: -1,
+  message: "Liquidsoap raised an unexpected exception while checking this script.",
+  file,
+  startLine: 1,
+  startColumn: 0,
+  endLine: 1,
+  endColumn: 0,
+});
+
 /**
  * Skips checking the script the analysis last checked, which diagnostics and
  * hover on an unchanged document both ask for.
  */
 export const rememberLastCheck = (analysis: Analysis): Analysis => {
-  let last: { source: string; file: string; result: RawDiagnostic[] } | undefined;
+  let last:
+    | { source: string; file: string; result: RawDiagnostic[]; failed: boolean }
+    | undefined;
+  const ifChecked = <T>(query: () => T, none: T): T => (last?.failed ? none : query());
   return {
     check: (source, file) => {
-      if (last?.source !== source || last.file !== file)
-        last = { source, file, result: analysis.check(source, file) };
+      if (last?.source !== source || last.file !== file) {
+        try {
+          last = { source, file, result: analysis.check(source, file), failed: false };
+        } catch {
+          last = { source, file, result: [failedCheck(file)], failed: true };
+        }
+      }
       return last.result;
     },
-    typeAt: (line, column) => analysis.typeAt(line, column),
-    localsAt: (line, column) => analysis.localsAt(line, column),
-    scopeAt: (line, column) => analysis.scopeAt(line, column),
-    methodsAt: (line, column) => analysis.methodsAt(line, column),
-    definitionAt: (line, column) => analysis.definitionAt(line, column),
+    typeAt: (line, column) => ifChecked(() => analysis.typeAt(line, column), null),
+    localsAt: (line, column) => ifChecked(() => analysis.localsAt(line, column), []),
+    scopeAt: (line, column) => ifChecked(() => analysis.scopeAt(line, column), []),
+    methodsAt: (line, column) => ifChecked(() => analysis.methodsAt(line, column), []),
+    definitionAt: (line, column) =>
+      ifChecked(() => analysis.definitionAt(line, column), null),
     nullMethods: () => analysis.nullMethods(),
   };
 };

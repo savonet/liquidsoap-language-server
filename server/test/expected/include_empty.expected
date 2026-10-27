@@ -1,0 +1,4 @@
+--- diagnostics ---
+error -1 1:0-1:0: Liquidsoap raised an unexpected exception while checking this script.
+--- hover 4:6 ---
+(none)
