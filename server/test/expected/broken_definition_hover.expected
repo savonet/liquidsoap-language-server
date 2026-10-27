@@ -1,5 +1,8 @@
 --- diagnostics ---
-error syntax 1:0-5:0: Syntax error.
+error syntax 2:14-2:14: Syntax error: missing `)`.
+error 15 2:2-2:14: Missing arguments in function application: source(audio='B, 'A)
+where 'A is a set of tracks to be muxed into a source,
+  'B is a track of type: pcm, pcm_s16 or pcm_f32 and a track.
 --- hover 6:7 ---
 ```liquidsoap
 string
