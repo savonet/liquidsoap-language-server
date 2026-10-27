@@ -72,6 +72,9 @@ jobs:
       # release since apt's is too old.
       - name: Install OCaml dependencies
         run: |
+          # opam installs depexts with apt, and the runner image's package index
+          # names versions the mirrors no longer have.
+          sudo apt-get update -qq
           for module in _deps/liquidsoap/src/modules/synced/*/; do
             opam pin add -yn "$module"
           done
