@@ -4,11 +4,8 @@ import * as path from "node:path";
 import { Diagnostic, DiagnosticSeverity, Range } from "vscode-languageserver/node";
 import { TextDocument } from "vscode-languageserver-textdocument";
 import { type Analysis, type RawDiagnostic, scriptPath } from "./analysis";
+import { parseErrorCodes, patchScript } from "./checked";
 import { fileDocument, lineText, spanRange } from "./positions";
-
-// Error codes of Liquidsoap's lexing and parse errors, which warnings reuse:
-// tree-sitter reports syntax errors itself once the script needed patching.
-const parseErrorCodes = new Set([1, 2, 3]);
 
 const severity = (raw: RawDiagnostic): DiagnosticSeverity =>
   raw.severity === "error" ? DiagnosticSeverity.Error : DiagnosticSeverity.Warning;
@@ -70,6 +67,8 @@ const semantic = (
   const file = scriptPath(document.uri);
   const raws = analysis
     .check(patched.getText(), file)
+    // Tree-sitter reports syntax errors itself once the script needed patching.
+    // Warnings reuse the parse errors' codes.
     .filter(
       ({ severity, code }) =>
         edits.length === 0 || severity !== "error" || !parseErrorCodes.has(code),
@@ -105,7 +104,12 @@ export const diagnose = (
   patch: Patcher,
   document: TextDocument,
 ): Diagnostic[] => {
-  const { source, edits, errors } = patch(document.getText());
+  const { source, edits, errors } = patchScript(
+    analysis,
+    patch,
+    document.getText(),
+    scriptPath(document.uri),
+  );
   if (edits.length === 0) return semantic(analysis, document, document, []);
   const patched = TextDocument.create(
     document.uri,
